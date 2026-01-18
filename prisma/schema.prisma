@@ -1,7 +1,43 @@
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+
+model User {
+  id              String          @id @default(uuid())
+  email           String          @unique @db.VarChar
+  name            String          @db.VarChar
+  picture         String?         @db.VarChar
+  discordUsername String?         @db.VarChar
+  role            UserRole        @default(USER)
+
+  createdAt DateTime        @db.Timestamptz @default(now())
+  updatedAt DateTime        @db.Timestamptz @updatedAt
+
+  authAccounts AuthAccount[]
+}
+
+enum UserRole {
+  USER
+  HOST
+  ADMIN
+}
+
+model AuthAccount {
+  id                  String   @id @default(uuid())
+  userId              String
+  provider            String  
+  providerAccountId   String
+  email               String?
+
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt           DateTime @default(now())
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
 }

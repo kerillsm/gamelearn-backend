@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
-import { getSafeEnv } from "./utils/getSafeEnv";
+import { getSafeEnv } from "./src/lib/config/getSafeEnv";
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
