@@ -8,6 +8,7 @@ import https from "https";
 import { appConfig } from "./config/appConfig";
 import { authRoutes } from "./routes/auth.routes";
 import { userRoutes } from "./routes/user.routes";
+import { storageRouter } from "./routes/storage.routes";
 
 // Initialize Koa app
 const app = new Koa();
@@ -33,7 +34,8 @@ router.get("/health", async (ctx) => {
 
 // Apply routes
 router.use("/auth", authRoutes.routes(), authRoutes.allowedMethods());
-router.use("/users", userRoutes.routes(), authRoutes.allowedMethods());
+router.use("/users", userRoutes.routes(), userRoutes.allowedMethods());
+router.use("/storage", storageRouter.routes(), storageRouter.allowedMethods());
 app.use(router.routes()).use(router.allowedMethods());
 
 // Start server

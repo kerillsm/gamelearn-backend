@@ -11,7 +11,7 @@ export class AuthorizeService {
     if (Array.isArray(state)) {
       throw new HttpError(400, "Invalid state parameter");
     }
-    const redirectToPage = state ? decodeURIComponent(state) : "/";
+    const redirectToPage = state ? decodeURIComponent(state) : "/cabinet";
 
     if (!isSafeRedirect(redirectToPage)) {
       throw new HttpError(400, "Unsafe redirect URL");

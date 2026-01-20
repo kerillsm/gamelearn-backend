@@ -25,7 +25,7 @@ export class AuthController {
       httpOnly: true,
       secure: true,
       sameSite: "none",
-      path: "/api/auth/refresh",
+      path: "/auth/refresh",
       maxAge: appConfig.auth.refreshTokenDurationMinutes * 60 * 1000,
     });
     ctx.cookies.set("access_token", accessTokenPayload.token, {
@@ -66,7 +66,7 @@ export class AuthController {
       httpOnly: true,
       secure: true,
       sameSite: "none",
-      path: "/api/auth/refresh",
+      path: "/auth/refresh",
       maxAge: 0,
     });
     ctx.cookies.set("access_token", "", {

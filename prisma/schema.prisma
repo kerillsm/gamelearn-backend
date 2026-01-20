@@ -23,7 +23,7 @@ model User {
 
 enum UserRole {
   USER
-  HOST
+  MENTOR
   ADMIN
 }
 

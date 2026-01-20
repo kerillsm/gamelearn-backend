@@ -12,4 +12,13 @@ export const appConfig = {
     accessTokenDurationMinutes: 15,
     refreshTokenDurationMinutes: 60 * 24 * 7, // 7 days
   },
+  s3: {
+    bucketName: getSafeEnv("S3_BUCKET_NAME"),
+    region: getSafeEnv("S3_REGION"),
+    endpoint: getSafeEnv("S3_ENDPOINT"),
+    accessKeyId: getSafeEnv("S3_ACCESS_KEY_ID"),
+    secretAccessKey: getSafeEnv("S3_SECRET_ACCESS_KEY"),
+    cdnUrl: getSafeEnv("S3_CDN_URL"),
+    folderName: getSafeEnv("S3_FOLDER_NAME"),
+  },
 };
