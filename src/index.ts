@@ -8,7 +8,9 @@ import https from "https";
 import { appConfig } from "./config/appConfig";
 import { authRoutes } from "./routes/auth.routes";
 import { userRoutes } from "./routes/user.routes";
-import { storageRouter } from "./routes/storage.routes";
+import { storageRoutes } from "./routes/storage.routes";
+import { mentorProfileRoutes } from "./routes/mentorProfile.routes";
+import { errorHandlerMiddleware } from "./lib/middleware/errorHandlerMiddleware";
 
 // Initialize Koa app
 const app = new Koa();
@@ -18,6 +20,7 @@ app.proxy = true;
 const router = new Router();
 
 // Middleware
+app.use(errorHandlerMiddleware);
 app.use(
   cors({
     origin: appConfig.frontendUrl,
@@ -35,7 +38,12 @@ router.get("/health", async (ctx) => {
 // Apply routes
 router.use("/auth", authRoutes.routes(), authRoutes.allowedMethods());
 router.use("/users", userRoutes.routes(), userRoutes.allowedMethods());
-router.use("/storage", storageRouter.routes(), storageRouter.allowedMethods());
+router.use("/storage", storageRoutes.routes(), storageRoutes.allowedMethods());
+router.use(
+  "/mentor-profile",
+  mentorProfileRoutes.routes(),
+  mentorProfileRoutes.allowedMethods(),
+);
 app.use(router.routes()).use(router.allowedMethods());
 
 // Start server

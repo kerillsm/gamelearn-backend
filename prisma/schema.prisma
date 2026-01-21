@@ -6,19 +6,20 @@ datasource db {
   provider = "postgresql"
 }
 
-
 model User {
   id              String          @id @default(uuid())
-  email           String          @unique @db.VarChar
-  name            String          @db.VarChar
-  picture         String?         @db.VarChar
-  discordUsername String?         @db.VarChar
+  email           String          @unique 
+  name            String          
+  picture         String?         
+  discordUsername String?         
+  slug            String?         @unique
   role            UserRole        @default(USER)
 
   createdAt DateTime        @db.Timestamptz @default(now())
   updatedAt DateTime        @db.Timestamptz @updatedAt
 
   authAccounts AuthAccount[]
+  mentorProfiles MentorProfile[]
 }
 
 enum UserRole {
@@ -40,4 +41,37 @@ model AuthAccount {
 
   @@unique([provider, providerAccountId])
   @@index([userId])
+}
+
+enum MentorGame {
+  DOTA2
+}
+
+enum MentorProfileStatus {
+  PENDING
+  REJECTED
+  ACTIVE
+  DISABLED
+}
+
+model MentorProfile {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  name              String
+  shortDescription  String
+  description       String
+  imageUrl          String
+  game              MentorGame
+  tags              String[]
+  gameRating        Float?
+  videoUrl          String?
+  rejectionReason   String?
+  status            MentorProfileStatus @default(PENDING)
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime @db.Timestamptz @default(now())
+  updatedAt     DateTime @db.Timestamptz @updatedAt
+
+  @@unique([userId, status])
 }

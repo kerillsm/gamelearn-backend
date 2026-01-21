@@ -14,7 +14,7 @@ export class RefreshTokenService {
     }
 
     const { id, email, role } = payload as {
-      id: number;
+      id: string;
       email: string;
       role: string;
     };
@@ -22,7 +22,7 @@ export class RefreshTokenService {
       throw new HttpError(401, "Invalid refresh token");
     }
 
-    const user = await UserService.getByEmail(email);
+    const user = await UserService.getById(id);
     if (!user) {
       throw new HttpError(401, "User not found");
     }

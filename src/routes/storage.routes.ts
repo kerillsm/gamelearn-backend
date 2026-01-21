@@ -12,4 +12,4 @@ router.post(
   StorageController.uploadFile,
 );
 
-export { router as storageRouter };
+export { router as storageRoutes };
