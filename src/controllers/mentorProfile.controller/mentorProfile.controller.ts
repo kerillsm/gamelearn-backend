@@ -12,6 +12,25 @@ import { MentorProfileService } from "../../services/out/mentorProfile.service";
 import { HttpError } from "../../lib/formatters/httpError";
 
 export class MentorProfileController {
+  static async getMentorProfiles(ctx: Context) {
+    const query = ctx.request.query.query as string | undefined;
+    const page = ctx.request.query.page
+      ? parseInt(ctx.request.query.page as string, 10)
+      : undefined;
+    const take = ctx.request.query.take
+      ? parseInt(ctx.request.query.take as string, 10)
+      : undefined;
+
+    const { mentorProfiles, totalCount } =
+      await MentorProfileService.getMentorProfiles({
+        query,
+        page,
+        take,
+      });
+    ctx.status = 200;
+    ctx.body = { mentorProfiles, totalCount };
+  }
+
   static async getBySlug(ctx: Context) {
     const slug = ctx.params.slug;
     if (!slug) {
@@ -44,6 +63,7 @@ export class MentorProfileController {
         .required(),
       tags: Joi.array().items(Joi.string()).required(),
       gameRating: Joi.number().optional().allow(null),
+      price: Joi.number().required().min(0),
       videoUrl: Joi.string().uri().optional().allow(null),
     }),
   )

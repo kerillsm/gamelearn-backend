@@ -51,6 +51,7 @@ export class UpsertMentorProfileService {
       gameRating: dto.gameRating,
       videoUrl: dto.videoUrl,
       status: MentorProfileStatus.PENDING,
+      price: dto.price,
     });
   }
 }

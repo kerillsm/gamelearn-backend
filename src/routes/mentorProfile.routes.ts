@@ -4,6 +4,8 @@ import { MentorProfileController } from "../controllers/mentorProfile.controller
 
 const router = new Router();
 
+router.get("/", MentorProfileController.getMentorProfiles);
+
 router.get(
   "/me",
   authMiddleware,

@@ -13,6 +13,35 @@ export class MentorProfileService {
     });
   }
 
+  static async getMentorProfiles(params: {
+    query?: string;
+    page?: number;
+    take?: number;
+  }) {
+    const { query, page = 1, take = 10 } = params;
+    const whereClause: Prisma.MentorProfileWhereInput = {
+      status: MentorProfileStatus.ACTIVE,
+    };
+
+    if (query) {
+      whereClause.OR = [
+        { name: { contains: query, mode: "insensitive" } },
+        { description: { contains: query, mode: "insensitive" } },
+        { shortDescription: { contains: query, mode: "insensitive" } },
+      ];
+    }
+
+    const mentorProfiles = await prisma.mentorProfile.findMany({
+      where: whereClause,
+      skip: (page - 1) * take,
+      take,
+      include: { user: { select: { slug: true } } },
+    });
+    const totalCount = await prisma.mentorProfile.count({ where: whereClause });
+
+    return { mentorProfiles, totalCount };
+  }
+
   static async getByUserId(userId: string, status: MentorProfileStatus) {
     return prisma.mentorProfile.findUnique({
       where: {

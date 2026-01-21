@@ -56,13 +56,14 @@ enum MentorProfileStatus {
 
 model MentorProfile {
   id                String   @id @default(uuid())
-  userId            String   @unique
+  userId            String
   name              String
   shortDescription  String
   description       String
   imageUrl          String
   game              MentorGame
   tags              String[]
+  price             Int
   gameRating        Float?
   videoUrl          String?
   rejectionReason   String?

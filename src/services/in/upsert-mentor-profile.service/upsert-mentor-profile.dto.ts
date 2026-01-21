@@ -9,6 +9,7 @@ export interface UpsertMentorProfileDto {
   imageUrl: string;
   game: MentorGame;
   tags: string[];
+  price: number;
   gameRating?: number;
   videoUrl?: string;
 }
