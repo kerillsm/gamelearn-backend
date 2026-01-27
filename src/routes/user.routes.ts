@@ -6,4 +6,6 @@ const router = new Router();
 
 router.get("/me", authMiddleware, UserController.getCurrentUser);
 
+router.put("/me", authMiddleware, UserController.updateCurrentUser);
+
 export { router as userRoutes };

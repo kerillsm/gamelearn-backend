@@ -5,6 +5,9 @@ export class UserService {
   static getById(id: string) {
     return prisma.user.findUnique({
       where: { id },
+      include: {
+        mentorProfiles: true,
+      },
     });
   }
 

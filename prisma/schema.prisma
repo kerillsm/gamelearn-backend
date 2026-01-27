@@ -14,6 +14,9 @@ model User {
   discordUsername String?         
   slug            String?         @unique
   role            UserRole        @default(USER)
+  availabilityRules AvailabilityRule[]
+  availabilityExceptions AvailabilityException[]
+  timezone        String?
 
   createdAt DateTime        @db.Timestamptz @default(now())
   updatedAt DateTime        @db.Timestamptz @updatedAt
@@ -75,4 +78,42 @@ model MentorProfile {
   updatedAt     DateTime @db.Timestamptz @updatedAt
 
   @@unique([userId, status])
+}
+
+model AvailabilityRule {
+  id               String   @id @default(uuid())
+  mentorUserId     String
+  rrule            String
+  startTime        String
+  endTime          String
+  timezone         String
+
+  mentorUser       User @relation(fields: [mentorUserId], references: [id], onDelete: Cascade)
+
+  createdAt        DateTime @db.Timestamptz @default(now())
+  updatedAt        DateTime @db.Timestamptz @updatedAt
+
+  @@index([mentorUserId])
+}
+
+enum ExceptionType {
+  AVAILABLE
+  UNAVAILABLE
+}
+
+model AvailabilityException {
+  id               String   @id @default(uuid())
+  mentorUserId     String
+  date             DateTime @db.Date
+  type             ExceptionType
+  startTime        String
+  endTime          String
+  timezone         String
+
+  mentorUser       User @relation(fields: [mentorUserId], references: [id], onDelete: Cascade)
+
+  createdAt        DateTime @db.Timestamptz @default(now())
+  updatedAt        DateTime @db.Timestamptz @updatedAt
+
+  @@index([mentorUserId])
 }

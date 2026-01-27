@@ -11,6 +11,7 @@ import { userRoutes } from "./routes/user.routes";
 import { storageRoutes } from "./routes/storage.routes";
 import { mentorProfileRoutes } from "./routes/mentorProfile.routes";
 import { errorHandlerMiddleware } from "./lib/middleware/errorHandlerMiddleware";
+import { availabilityRoutes } from "./routes/availability.routes";
 
 // Initialize Koa app
 const app = new Koa();
@@ -43,6 +44,11 @@ router.use(
   "/mentor-profile",
   mentorProfileRoutes.routes(),
   mentorProfileRoutes.allowedMethods(),
+);
+router.use(
+  "/availability",
+  availabilityRoutes.routes(),
+  availabilityRoutes.allowedMethods(),
 );
 app.use(router.routes()).use(router.allowedMethods());
 
