@@ -30,10 +30,10 @@ export class AvailabilityService {
 
   static async getAvailabilityExceptionsByMentorUserId(
     mentorUserId: string,
-    furtherThan?: Date,
+    dateFilter?: { gte?: Date; lte?: Date },
   ) {
     return prisma.availabilityException.findMany({
-      where: { mentorUserId, date: { gte: furtherThan } },
+      where: { mentorUserId, date: dateFilter },
     });
   }
 

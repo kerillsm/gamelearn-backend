@@ -27,14 +27,14 @@ export function transformAvailabilityRulesToDTO(
           hour: startHour,
           minute: startMinute,
         })
-        .setZone(rule.timezone, { keepLocalTime: true });
+        .setZone(rule.timezone);
 
       const endInRuleTz = refDate
         .set({
           hour: endHour,
           minute: endMinute,
         })
-        .setZone(rule.timezone, { keepLocalTime: true });
+        .setZone(rule.timezone);
 
       // 2️⃣ Конвертуємо у target timezone
       const startInTargetTz = startInRuleTz.setZone(targetTimezone);

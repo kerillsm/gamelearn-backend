@@ -15,7 +15,7 @@ export class GetAvailabilityExceptionsService {
     const exceptions =
       await AvailabilityService.getAvailabilityExceptionsByMentorUserId(
         mentorUserId,
-        startOfPreviousDay,
+        { gte: startOfPreviousDay },
       );
 
     return exceptions.map((exception) => {
@@ -42,7 +42,7 @@ export class GetAvailabilityExceptionsService {
 
       return {
         id: exception.id,
-        date: startInUserTz.toISODate(),
+        date: exception.date,
         startTime: startInUserTz.toFormat("HH:mm"),
         endTime: endInUserTz.toFormat("HH:mm"),
         type: exception.type,

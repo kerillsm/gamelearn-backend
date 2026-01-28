@@ -23,6 +23,8 @@ model User {
 
   authAccounts AuthAccount[]
   mentorProfiles MentorProfile[]
+  sessionsAsUser Session[]      @relation("UserSessions")
+  sessionsAsMentor Session[]    @relation("MentorSessions")
 }
 
 enum UserRole {
@@ -104,7 +106,7 @@ enum ExceptionType {
 model AvailabilityException {
   id               String   @id @default(uuid())
   mentorUserId     String
-  date             DateTime @db.Date
+  date             DateTime
   type             ExceptionType
   startTime        String
   endTime          String
@@ -115,5 +117,39 @@ model AvailabilityException {
   createdAt        DateTime @db.Timestamptz @default(now())
   updatedAt        DateTime @db.Timestamptz @updatedAt
 
+  @@index([mentorUserId])
+}
+
+enum SessionStatus {
+  PENDING
+  APPROVED
+  COMPLETED
+  CANCELED
+}
+
+enum SessionType {
+  VIBE_CHECK
+  ONE_SESSION
+  SESSIONS_PACK
+}
+
+model Session {
+  id               String   @id @default(uuid())
+  userId           String
+  mentorUserId     String
+  scheduledAt      DateTime @db.Timestamptz
+  status           SessionStatus @default(PENDING)
+  type             SessionType
+  duration         Int
+  price            Float
+  serviceFee       Float
+
+  user             User     @relation("UserSessions", fields: [userId], references: [id], onDelete: Cascade)
+  mentorUser       User     @relation("MentorSessions", fields: [mentorUserId], references: [id], onDelete: Cascade)
+
+  createdAt        DateTime @db.Timestamptz @default(now())
+  updatedAt        DateTime @db.Timestamptz @updatedAt
+
+  @@index([userId])
   @@index([mentorUserId])
 }

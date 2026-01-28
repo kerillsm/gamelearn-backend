@@ -34,4 +34,16 @@ router.delete(
   AvailabilityController.removeAvailabilityException,
 );
 
+router.get(
+  "/mentor/:mentorId/available-days",
+  authMiddleware,
+  AvailabilityController.getMentorAvailableDates,
+);
+
+router.get(
+  "/mentor/:mentorId/available-times",
+  authMiddleware,
+  AvailabilityController.getMentorAvailableTimes,
+);
+
 export { router as availabilityRoutes };

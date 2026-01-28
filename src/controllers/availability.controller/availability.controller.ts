@@ -10,6 +10,9 @@ import { GetAvailabilityRulesService } from "../../services/in/get-availability-
 import { AddAvailabilityExceptionService } from "../../services/in/add-availability-exception.service";
 import { GetAvailabilityExceptionsService } from "../../services/in/get-availability-exceptions.service";
 import { AvailabilityService } from "../../services/out/availability.service/availability.service";
+import { MentorAvailabilityService } from "../../services/in/mentor-availability.service";
+import { SessionType } from "@prisma/client";
+import { HttpError } from "../../lib/formatters/httpError";
 
 export class AvailabilityController {
   @AuthRequired()
@@ -100,7 +103,6 @@ export class AvailabilityController {
   static async removeAvailabilityException(ctx: Context) {
     const userId = ctx.state.user.id;
     const { exceptionId } = ctx.params as { exceptionId?: string };
-    console.log("exceptionId", exceptionId, ctx.params);
 
     if (!exceptionId) {
       ctx.status = 400;
@@ -112,5 +114,74 @@ export class AvailabilityController {
 
     ctx.status = 200;
     ctx.body = { message: "Availability exception removed successfully" };
+  }
+
+  @AuthRequired()
+  static async getMentorAvailableDates(ctx: Context) {
+    const userId = ctx.state.user.id;
+    const mentorUserId = ctx.params.mentorId;
+    const { year, month, sessionType } = ctx.query as {
+      year: string;
+      month: string;
+      sessionType: string;
+    };
+
+    if (
+      !mentorUserId ||
+      !year ||
+      !month ||
+      !sessionType ||
+      Object.keys(SessionType).indexOf(sessionType) === -1
+    ) {
+      throw new HttpError(
+        400,
+        "mentorUserId, date and sessionType are required",
+      );
+    }
+
+    const availableDates =
+      await MentorAvailabilityService.getAvailableMentorDates({
+        userId,
+        mentorUserId,
+        sessionType: sessionType as SessionType,
+        year: parseInt(year, 10),
+        month: parseInt(month, 10),
+      });
+
+    ctx.status = 200;
+    ctx.body = { availableDates };
+  }
+
+  @AuthRequired()
+  static async getMentorAvailableTimes(ctx: Context) {
+    const userId = ctx.state.user.id;
+    const mentorUserId = ctx.params.mentorId;
+    const { date, sessionType } = ctx.query as {
+      date: string;
+      sessionType: string;
+    };
+
+    if (
+      !mentorUserId ||
+      !date ||
+      !sessionType ||
+      Object.keys(SessionType).indexOf(sessionType) === -1
+    ) {
+      throw new HttpError(
+        400,
+        "mentorUserId, date and sessionType are required",
+      );
+    }
+
+    const availableTimes =
+      await MentorAvailabilityService.getMentorAvailableTimes(
+        userId,
+        mentorUserId,
+        date,
+        sessionType as SessionType,
+      );
+
+    ctx.status = 200;
+    ctx.body = { availableTimes };
   }
 }

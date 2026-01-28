@@ -37,6 +37,7 @@
     "koa-passport": "^6.0.0",
     "koa-router": "^14.0.0",
     "luxon": "^3.7.2",
-    "passport-discord": "^0.1.4"
+    "passport-discord": "^0.1.4",
+    "rrule": "^2.8.1"
   }
 }
