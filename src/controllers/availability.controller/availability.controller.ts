@@ -10,9 +10,10 @@ import { GetAvailabilityRulesService } from "../../services/in/get-availability-
 import { AddAvailabilityExceptionService } from "../../services/in/add-availability-exception.service";
 import { GetAvailabilityExceptionsService } from "../../services/in/get-availability-exceptions.service";
 import { AvailabilityService } from "../../services/out/availability.service/availability.service";
-import { MentorAvailabilityService } from "../../services/in/mentor-availability.service";
 import { SessionType } from "@prisma/client";
 import { HttpError } from "../../lib/formatters/httpError";
+import { GetAvailableMentorDates } from "../../services/in/get-available-mentor-dates.service";
+import { GetMentorAvailableTimes } from "../../services/in/get-mentor-available-times.service";
 
 export class AvailabilityController {
   @AuthRequired()
@@ -140,7 +141,7 @@ export class AvailabilityController {
     }
 
     const availableDates =
-      await MentorAvailabilityService.getAvailableMentorDates({
+      await GetAvailableMentorDates.getAvailableMentorDates({
         userId,
         mentorUserId,
         sessionType: sessionType as SessionType,
@@ -174,12 +175,12 @@ export class AvailabilityController {
     }
 
     const availableTimes =
-      await MentorAvailabilityService.getMentorAvailableTimes(
-        userId,
-        mentorUserId,
+      await GetMentorAvailableTimes.getMentorAvailableTimes({
         date,
-        sessionType as SessionType,
-      );
+        mentorUserId,
+        sessionType: sessionType as SessionType,
+        userId,
+      });
 
     ctx.status = 200;
     ctx.body = { availableTimes };

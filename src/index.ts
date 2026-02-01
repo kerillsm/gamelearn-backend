@@ -12,6 +12,7 @@ import { storageRoutes } from "./routes/storage.routes";
 import { mentorProfileRoutes } from "./routes/mentorProfile.routes";
 import { errorHandlerMiddleware } from "./lib/middleware/errorHandlerMiddleware";
 import { availabilityRoutes } from "./routes/availability.routes";
+import { sessionRoutes } from "./routes/session.routes";
 
 // Initialize Koa app
 const app = new Koa();
@@ -50,6 +51,7 @@ router.use(
   availabilityRoutes.routes(),
   availabilityRoutes.allowedMethods(),
 );
+router.use("/sessions", sessionRoutes.routes(), sessionRoutes.allowedMethods());
 app.use(router.routes()).use(router.allowedMethods());
 
 // Start server

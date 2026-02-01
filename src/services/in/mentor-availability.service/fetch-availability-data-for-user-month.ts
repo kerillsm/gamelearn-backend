@@ -1,6 +1,7 @@
 import { DateTime } from "luxon";
 import { AvailabilityService } from "../../out/availability.service/availability.service";
 import { SessionService } from "../../out/session.service";
+import { SessionStatus } from "@prisma/client";
 
 const FETCH_BUFFER_DAYS = 2;
 
@@ -45,8 +46,14 @@ export async function fetchAvailabilityDataForUserMonth({
       lte: fetchEndDate,
     }),
     SessionService.getMentorSessions(mentorUserId, {
-      gte: userMonthStart.toUTC().toJSDate(),
-      lte: userMonthEnd.toUTC().toJSDate(),
+      scheduledAt: {
+        gte: userMonthStart.toUTC().toJSDate(),
+        lte: userMonthEnd.toUTC().toJSDate(),
+      },
+      OR: [
+        { status: SessionStatus.APPROVED },
+        { status: SessionStatus.COMPLETED },
+      ],
     }),
   ]);
 

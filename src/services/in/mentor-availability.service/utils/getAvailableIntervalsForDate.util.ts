@@ -10,6 +10,7 @@ import {
   AvailabilityException,
   AvailabilityRule,
   ExceptionType,
+  Session,
   SessionType,
 } from "@prisma/client";
 import { SESSION_DURATION_BY_TYPE } from "../../../out/session.service";
@@ -20,10 +21,12 @@ export function getAvailableIntervalsForDate({
   exceptions,
   userTimezone,
   sessionType,
+  bookings,
 }: {
   day: DateTime;
   rules: AvailabilityRule[];
   exceptions: AvailabilityException[];
+  bookings: Session[];
   userTimezone: string;
   sessionType: SessionType;
 }) {
@@ -79,19 +82,19 @@ export function getAvailableIntervalsForDate({
   }
 
   // 3. Bookings — ТІЛЬКИ duration
-  // for (const booking of bookings) {
-  //   const start = DateTime.fromJSDate(booking.scheduledAt).setZone(
-  //     userTimezone,
-  //   );
+  for (const booking of bookings) {
+    const start = DateTime.fromJSDate(booking.scheduledAt).setZone(
+      userTimezone,
+    );
 
-  //   const end = start.plus({ minutes: booking.duration });
+    const end = start.plus({ minutes: booking.duration });
 
-  //   const bookingInterval = Interval.fromDateTimes(start, end);
+    const bookingInterval = Interval.fromDateTimes(start, end);
 
-  //   if (!bookingInterval.isValid) continue;
+    if (!bookingInterval.isValid) continue;
 
-  //   intervals = subtractInterval(intervals, bookingInterval);
-  // }
+    intervals = subtractInterval(intervals, bookingInterval);
+  }
 
   intervals = intervals.filter(
     (interval) =>
