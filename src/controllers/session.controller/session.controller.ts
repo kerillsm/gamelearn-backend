@@ -4,6 +4,7 @@ import { Validate } from "../../lib/decorators/validate.decorator";
 import { Context } from "koa";
 import { CreateSessionService } from "../../services/in/create-session.service";
 import { SessionType } from "@prisma/client";
+import { GetUserVibeCheckSessionService } from "../../services/in/get-user-vibe-check-session.service";
 
 export class SessionController {
   @AuthRequired()
@@ -43,5 +44,19 @@ export class SessionController {
 
     ctx.status = 201;
     ctx.body = { sessions: sessionsResp };
+  }
+
+  @AuthRequired()
+  static async hasVibeCheckSession(ctx: Context) {
+    const user = ctx.state.user;
+    const { mentorSlug } = ctx.params as { mentorSlug: string };
+
+    const session = await GetUserVibeCheckSessionService.getVibeCheckSession(
+      user.id,
+      mentorSlug,
+    );
+
+    ctx.status = 200;
+    ctx.body = { session };
   }
 }

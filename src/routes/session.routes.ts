@@ -6,4 +6,10 @@ const router = new Router();
 
 router.post("/", authMiddleware, SessionController.createSession);
 
+router.get(
+  "/:mentorSlug/vibe-check",
+  authMiddleware,
+  SessionController.hasVibeCheckSession,
+);
+
 export { router as sessionRoutes };
