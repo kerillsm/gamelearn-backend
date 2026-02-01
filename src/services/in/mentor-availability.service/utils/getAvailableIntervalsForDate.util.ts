@@ -6,17 +6,24 @@ import {
   subtractInterval,
 } from "./interval.util";
 import { rruleProducesOccurrenceInUserDay } from "./rrule.utils";
-import { AvailabilityRule, SessionType } from "@prisma/client";
+import {
+  AvailabilityException,
+  AvailabilityRule,
+  ExceptionType,
+  SessionType,
+} from "@prisma/client";
 import { SESSION_DURATION_BY_TYPE } from "../../../out/session.service";
 
 export function getAvailableIntervalsForDate({
   day,
   rules,
+  exceptions,
   userTimezone,
   sessionType,
 }: {
   day: DateTime;
   rules: AvailabilityRule[];
+  exceptions: AvailabilityException[];
   userTimezone: string;
   sessionType: SessionType;
 }) {
@@ -56,20 +63,20 @@ export function getAvailableIntervalsForDate({
   intervals = mergeIntervals(intervals);
 
   // 2. Exceptions
-  // for (const ex of exceptions) {
-  //   const interval = buildExceptionIntervalForUserDay(ex, userTimezone);
+  for (const ex of exceptions) {
+    const interval = buildExceptionIntervalForUserDay(ex, userTimezone);
 
-  //   if (!interval) continue;
+    if (!interval) continue;
 
-  //   if (ex.type === ExceptionType.UNAVAILABLE) {
-  //     intervals = subtractInterval(intervals, interval);
-  //   }
+    if (ex.type === ExceptionType.UNAVAILABLE) {
+      intervals = subtractInterval(intervals, interval);
+    }
 
-  //   if (ex.type === ExceptionType.AVAILABLE) {
-  //     intervals.push(interval);
-  //     intervals = mergeIntervals(intervals);
-  //   }
-  // }
+    if (ex.type === ExceptionType.AVAILABLE) {
+      intervals.push(interval);
+      intervals = mergeIntervals(intervals);
+    }
+  }
 
   // 3. Bookings — ТІЛЬКИ duration
   // for (const booking of bookings) {

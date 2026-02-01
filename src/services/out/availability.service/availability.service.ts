@@ -23,6 +23,7 @@ export class AvailabilityService {
   static async createAvailabilityException(
     availabilityException: Prisma.AvailabilityExceptionCreateInput,
   ) {
+    console.log("Creating availability exception:", availabilityException);
     return prisma.availabilityException.create({
       data: availabilityException,
     });

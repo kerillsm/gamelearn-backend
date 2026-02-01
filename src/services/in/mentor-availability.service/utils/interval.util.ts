@@ -130,7 +130,7 @@ export function buildExceptionIntervalForUserDay(
   userTimezone: string,
 ): Interval | null {
   try {
-    // Початок і кінець дня exception у його timezone
+    // Початок дня exception у його timezone
     const exDayStart = DateTime.fromJSDate(exception.date, {
       zone: exception.timezone,
     }).startOf("day");

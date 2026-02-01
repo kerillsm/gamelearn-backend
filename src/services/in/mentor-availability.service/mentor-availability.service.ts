@@ -47,6 +47,9 @@ export class MentorAvailabilityService {
       const intervals = getAvailableIntervalsForDate({
         day,
         rules,
+        exceptions: exceptions.filter((ex) =>
+          DateTime.fromJSDate(ex.date).hasSame(day, "day"),
+        ),
         userTimezone,
         sessionType,
       });
@@ -77,7 +80,7 @@ export class MentorAvailabilityService {
 
     const userTimezone = user.timezone;
 
-    const { rules } = await fetchAvailabilityDataForUserMonth({
+    const { rules, exceptions } = await fetchAvailabilityDataForUserMonth({
       mentorUserId,
       userTimezone,
       year: lDate.year,
@@ -87,6 +90,9 @@ export class MentorAvailabilityService {
     const intervals = getAvailableIntervalsForDate({
       day: lDate,
       rules,
+      exceptions: exceptions.filter((ex) =>
+        DateTime.fromJSDate(ex.date).hasSame(lDate, "day"),
+      ),
       sessionType,
       userTimezone,
     });

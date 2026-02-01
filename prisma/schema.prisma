@@ -106,7 +106,7 @@ enum ExceptionType {
 model AvailabilityException {
   id               String   @id @default(uuid())
   mentorUserId     String
-  date             DateTime
+  date             DateTime @db.Timestamptz
   type             ExceptionType
   startTime        String
   endTime          String
