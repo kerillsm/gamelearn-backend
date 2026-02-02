@@ -14,6 +14,7 @@ model User {
   discordUsername String?         
   slug            String?         @unique
   role            UserRole        @default(USER)
+  termsAcceptedAt DateTime?       @db.Timestamptz
   availabilityRules AvailabilityRule[]
   availabilityExceptions AvailabilityException[]
   timezone        String?
@@ -21,10 +22,14 @@ model User {
   createdAt DateTime        @db.Timestamptz @default(now())
   updatedAt DateTime        @db.Timestamptz @updatedAt
 
-  authAccounts AuthAccount[]
-  mentorProfiles MentorProfile[]
-  sessionsAsUser Session[]      @relation("UserSessions")
-  sessionsAsMentor Session[]    @relation("MentorSessions")
+  authAccounts      AuthAccount[]
+  mentorProfiles    MentorProfile[]
+  sessionsAsUser    Session[]      @relation("UserSessions")
+  sessionsAsMentor  Session[]    @relation("MentorSessions")
+  referralCode      ReferralCode?  @relation("ReferralCodeOwner")
+  referredBy        Referral?      @relation("ReferredUser")
+  referralEarnings  ReferralEarning[]
+  agreements        Agreement[]
 }
 
 enum UserRole {
@@ -145,16 +150,80 @@ model Session {
   duration         Int
   price            Float
   serviceFee       Float
+  mentorEarnings   Float?
+  platformFee      Float?
+  referralDiscount Float?
   stripeSessionId  String?  @unique
   venue            String?
   rejectionReason  String?
 
   user             User     @relation("UserSessions", fields: [userId], references: [id], onDelete: Cascade)
   mentorUser       User     @relation("MentorSessions", fields: [mentorUserId], references: [id], onDelete: Cascade)
+  referralEarnings ReferralEarning[]
 
   createdAt        DateTime @db.Timestamptz @default(now())
   updatedAt        DateTime @db.Timestamptz @updatedAt
 
   @@index([userId])
   @@index([mentorUserId])
+}
+
+model ReferralCode {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  userId    String   @unique
+  user      User     @relation("ReferralCodeOwner", fields: [userId], references: [id], onDelete: Cascade)
+  referrals Referral[]
+
+  createdAt DateTime @db.Timestamptz @default(now())
+}
+
+model Referral {
+  id             String   @id @default(uuid())
+  referralCodeId String
+  referredUserId String   @unique
+  referralCode   ReferralCode @relation(fields: [referralCodeId], references: [id], onDelete: Cascade)
+  referredUser   User     @relation("ReferredUser", fields: [referredUserId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime @db.Timestamptz @default(now())
+}
+
+enum ReferralEarningType {
+  CLIENT_REFERRAL
+  MENTOR_REFERRAL
+}
+
+model ReferralEarning {
+  id             String              @id @default(uuid())
+  referrerUserId String
+  sessionId      String
+  amount         Float
+  type           ReferralEarningType @default(CLIENT_REFERRAL)
+  isPaidOut      Boolean             @default(false)
+  referrerUser   User                @relation(fields: [referrerUserId], references: [id], onDelete: Cascade)
+  session        Session             @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime @db.Timestamptz @default(now())
+
+  @@index([referrerUserId])
+  @@index([sessionId])
+}
+
+enum AgreementType {
+  TERMS_OF_SERVICE
+  PRIVACY_POLICY
+}
+
+model Agreement {
+  id         String        @id @default(uuid())
+  userId     String
+  type       AgreementType
+  version    String
+  ipAddress  String
+  userAgent  String?
+  acceptedAt DateTime      @db.Timestamptz @default(now())
+
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

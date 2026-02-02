@@ -1,5 +1,6 @@
 import { SessionStatus } from "@prisma/client";
 import { SessionService } from "../../out/session.service";
+import { RecordReferralEarningService } from "../record-referral-earning.service";
 
 export class PaymentService {
   static async handleCheckoutCompleted(stripeSessionId: string) {
@@ -13,6 +14,15 @@ export class PaymentService {
       stripeSessionId,
       SessionStatus.PAYED,
     );
+
+    // Record referral earnings for each session
+    for (const session of sessions) {
+      try {
+        await RecordReferralEarningService.execute(session.id);
+      } catch (error) {
+        console.error(`Failed to record referral earning for session ${session.id}:`, error);
+      }
+    }
 
     console.log(
       `Payment completed for ${sessions.length} session(s), stripeSessionId: ${stripeSessionId}`,

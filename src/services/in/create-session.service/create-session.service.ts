@@ -9,6 +9,7 @@ import { appConfig } from "../../../config/appConfig";
 import { PricingService } from "../pricing.service";
 import { SessionValidationService } from "../session-validation.service";
 import { CreateSessionResult } from "./create-session.interface";
+import { ReferralService } from "../../out/referral.service";
 
 export class CreateSessionService {
   static async create(data: CreateSessionDTO): Promise<CreateSessionResult> {
@@ -27,11 +28,20 @@ export class CreateSessionService {
       mentorProfile.userId,
     );
 
+    // Get referrers for referral bonus calculation
+    const clientReferrerId = await ReferralService.getReferrerUserId(user.id);
+    const mentorReferrerId = await ReferralService.getReferrerUserId(mentorProfile.userId);
+
     const isFreeSession = PricingService.isFreeSession(data.sessionType);
     const pricing = PricingService.calculate(
       data.sessionType,
       mentorProfile.price,
       mentorCompletedSessions,
+      {
+        clientReferrerId,
+        mentorReferrerId,
+        mentorUserId: mentorProfile.userId,
+      },
     );
 
     // Validate vibe check eligibility upfront
@@ -60,6 +70,9 @@ export class CreateSessionService {
             user: { connect: { id: user.id } },
             mentorUser: { connect: { id: mentorProfile.userId } },
             serviceFee: pricing.serviceFee,
+            mentorEarnings: pricing.mentorEarnings / PricingService.getSessionsCount(data.sessionType),
+            platformFee: pricing.platformFee / PricingService.getSessionsCount(data.sessionType),
+            referralDiscount: pricing.referralDiscount / PricingService.getSessionsCount(data.sessionType),
             type: data.sessionType,
             status: isFreeSession ? SessionStatus.PAYED : SessionStatus.PENDING,
           });

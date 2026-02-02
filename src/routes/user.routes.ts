@@ -8,4 +8,6 @@ router.get("/me", authMiddleware, UserController.getCurrentUser);
 
 router.put("/me", authMiddleware, UserController.updateCurrentUser);
 
+router.post("/me/accept-terms", authMiddleware, UserController.acceptTerms);
+
 export { router as userRoutes };

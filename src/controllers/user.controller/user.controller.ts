@@ -5,6 +5,7 @@ import { UserService } from "../../services/out/user.service";
 import { Validate } from "../../lib/decorators/validate.decorator";
 import Joi from "joi";
 import { UpdateUserService } from "../../services/in/update-user.service";
+import { AcceptTermsService } from "../../services/in/accept-terms.service";
 
 export class UserController {
   @AuthRequired()
@@ -42,5 +43,21 @@ export class UserController {
 
     ctx.status = 200;
     ctx.body = { user: updatedUser };
+  }
+
+  @AuthRequired()
+  static async acceptTerms(ctx: Context) {
+    const user = ctx.state.user!;
+    const ipAddress = ctx.ip || ctx.request.ip || "unknown";
+    const userAgent = ctx.get("User-Agent") || undefined;
+
+    const result = await AcceptTermsService.execute({
+      userId: user.id,
+      ipAddress,
+      userAgent,
+    });
+
+    ctx.status = 200;
+    ctx.body = { termsAcceptedAt: result.termsAcceptedAt };
   }
 }

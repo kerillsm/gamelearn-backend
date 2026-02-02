@@ -1,9 +1,11 @@
 import { SessionType } from "@prisma/client";
 import { assertUnreachable } from "../../../lib/formatters/assertUnreachable";
-import { PricingResult } from "./pricing.interface";
+import { PricingResult, ReferralContext } from "./pricing.interface";
 
 const SESSIONS_IN_PACK_COUNT = 3;
 const SESSIONS_PACK_DISCOUNT = 0.1;
+const MENTOR_REFERRAL_DISCOUNT = 0.15; // Flat 15% reduction from fee
+const REFERRER_BONUS_RATE = 0.05; // Flat 5% reduction from fee
 
 // Service fee tiers based on mentor's completed sessions
 const SERVICE_FEE_TIERS = [
@@ -17,6 +19,7 @@ export class PricingService {
     sessionType: SessionType,
     mentorPrice: number,
     mentorCompletedSessions: number = 0,
+    referralContext?: ReferralContext,
   ): PricingResult {
     let totalPrice: number;
     let sessionPrice: number;
@@ -40,12 +43,51 @@ export class PricingService {
         sessionPrice = 0;
     }
 
-    const serviceFee = this.calculateServiceFee(mentorCompletedSessions);
+    let serviceFee = this.calculateServiceFee(mentorCompletedSessions);
+    let referralDiscount = 0;
+    let clientReferralBonus = 0;
+    let mentorReferralBonus = 0;
+
+    // Check if mentor referred the client (mentor gets 15% flat discount from fee)
+    const mentorReferredClient =
+      referralContext &&
+      referralContext.clientReferrerId === referralContext.mentorUserId;
+
+    if (mentorReferredClient) {
+      // Flat 15% reduction: 33% - 15% = 18%
+      referralDiscount = MENTOR_REFERRAL_DISCOUNT;
+      serviceFee = Math.max(0, serviceFee - referralDiscount);
+    }
+
+    // Client referrer bonus: flat 5% of total price (fee reduced by 5%)
+    if (
+      referralContext?.clientReferrerId &&
+      referralContext.clientReferrerId !== referralContext.mentorUserId
+    ) {
+      clientReferralBonus = totalPrice * REFERRER_BONUS_RATE;
+      serviceFee = Math.max(0, serviceFee - REFERRER_BONUS_RATE);
+    }
+
+    // Mentor referrer bonus: flat 5% of total price (fee reduced by 5%)
+    if (referralContext?.mentorReferrerId) {
+      mentorReferralBonus = totalPrice * REFERRER_BONUS_RATE;
+      serviceFee = Math.max(0, serviceFee - REFERRER_BONUS_RATE);
+    }
+
+    const serviceFeeAmount = totalPrice * serviceFee;
+    const totalReferralBonuses = clientReferralBonus + mentorReferralBonus;
+    const platformFeeAmount = serviceFeeAmount;
+    const mentorEarnings = totalPrice - serviceFeeAmount - totalReferralBonuses;
 
     return {
       totalPrice,
       sessionPrice,
       serviceFee,
+      mentorEarnings,
+      platformFee: platformFeeAmount,
+      clientReferralBonus,
+      mentorReferralBonus,
+      referralDiscount,
     };
   }
 

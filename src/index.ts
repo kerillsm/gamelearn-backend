@@ -15,6 +15,7 @@ import { stripeWebhookMiddleware } from "./lib/middleware/stripeWebhookMiddlewar
 import { availabilityRoutes } from "./routes/availability.routes";
 import { sessionRoutes } from "./routes/session.routes";
 import { paymentRoutes } from "./routes/payment.routes";
+import { referralRoutes } from "./routes/referral.routes";
 
 // Initialize Koa app
 const app = new Koa();
@@ -56,6 +57,11 @@ router.use(
 );
 router.use("/sessions", sessionRoutes.routes(), sessionRoutes.allowedMethods());
 router.use("/payment", paymentRoutes.routes(), paymentRoutes.allowedMethods());
+router.use(
+  "/referral",
+  referralRoutes.routes(),
+  referralRoutes.allowedMethods(),
+);
 app.use(router.routes()).use(router.allowedMethods());
 
 // Start server
