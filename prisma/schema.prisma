@@ -122,7 +122,9 @@ model AvailabilityException {
 
 enum SessionStatus {
   PENDING
+  PAYED
   APPROVED
+  REJECTED
   COMPLETED
   CANCELED
 }
@@ -143,6 +145,9 @@ model Session {
   duration         Int
   price            Float
   serviceFee       Float
+  stripeSessionId  String?  @unique
+  venue            String?
+  rejectionReason  String?
 
   user             User     @relation("UserSessions", fields: [userId], references: [id], onDelete: Cascade)
   mentorUser       User     @relation("MentorSessions", fields: [mentorUserId], references: [id], onDelete: Cascade)

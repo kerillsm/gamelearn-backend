@@ -35,4 +35,64 @@ export class SessionService {
       where: { id: sessionId },
     });
   }
+
+  static updateStripeSessionId(sessionIds: string[], stripeSessionId: string) {
+    return prisma.session.updateMany({
+      where: { id: { in: sessionIds } },
+      data: { stripeSessionId },
+    });
+  }
+
+  static updateStatusByStripeSessionId(
+    stripeSessionId: string,
+    status: SessionStatus,
+  ) {
+    return prisma.session.updateMany({
+      where: { stripeSessionId },
+      data: { status },
+    });
+  }
+
+  static deleteByStripeSessionId(stripeSessionId: string) {
+    return prisma.session.deleteMany({
+      where: { stripeSessionId },
+    });
+  }
+
+  static getByStripeSessionId(stripeSessionId: string) {
+    return prisma.session.findMany({
+      where: { stripeSessionId },
+    });
+  }
+
+  static getById(sessionId: string) {
+    return prisma.session.findUnique({
+      where: { id: sessionId },
+    });
+  }
+
+  static updateSession(sessionId: string, data: Prisma.SessionUpdateInput) {
+    return prisma.session.update({
+      where: { id: sessionId },
+      data,
+    });
+  }
+
+  static countCompletedSessionsByMentor(mentorUserId: string) {
+    return prisma.session.count({
+      where: {
+        mentorUserId,
+        status: SessionStatus.COMPLETED,
+      },
+    });
+  }
+
+  static deletePendingByIds(sessionIds: string[]) {
+    return prisma.session.deleteMany({
+      where: {
+        id: { in: sessionIds },
+        status: SessionStatus.PENDING,
+      },
+    });
+  }
 }

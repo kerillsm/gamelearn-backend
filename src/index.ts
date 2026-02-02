@@ -11,8 +11,10 @@ import { userRoutes } from "./routes/user.routes";
 import { storageRoutes } from "./routes/storage.routes";
 import { mentorProfileRoutes } from "./routes/mentorProfile.routes";
 import { errorHandlerMiddleware } from "./lib/middleware/errorHandlerMiddleware";
+import { stripeWebhookMiddleware } from "./lib/middleware/stripeWebhookMiddleware";
 import { availabilityRoutes } from "./routes/availability.routes";
 import { sessionRoutes } from "./routes/session.routes";
+import { paymentRoutes } from "./routes/payment.routes";
 
 // Initialize Koa app
 const app = new Koa();
@@ -30,6 +32,7 @@ app.use(
     allowHeaders: ["Content-Type", "Authorization"],
   }),
 );
+app.use(stripeWebhookMiddleware);
 app.use(koaBody());
 
 // Routes
@@ -52,6 +55,7 @@ router.use(
   availabilityRoutes.allowedMethods(),
 );
 router.use("/sessions", sessionRoutes.routes(), sessionRoutes.allowedMethods());
+router.use("/payment", paymentRoutes.routes(), paymentRoutes.allowedMethods());
 app.use(router.routes()).use(router.allowedMethods());
 
 // Start server

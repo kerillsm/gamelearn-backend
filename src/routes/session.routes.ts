@@ -12,4 +12,16 @@ router.get(
   SessionController.hasVibeCheckSession,
 );
 
+// Cancel pending sessions (when user cancels payment)
+router.post("/cancel-pending", authMiddleware, SessionController.cancelPendingSessions);
+
+// Mentor approves session and sets venue
+router.post("/:sessionId/approve", authMiddleware, SessionController.approveSession);
+
+// Mentor rejects session
+router.post("/:sessionId/reject", authMiddleware, SessionController.rejectSession);
+
+// Mentor updates venue
+router.patch("/:sessionId/venue", authMiddleware, SessionController.setVenue);
+
 export { router as sessionRoutes };

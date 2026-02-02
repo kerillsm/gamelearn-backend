@@ -21,4 +21,8 @@ export const appConfig = {
     cdnUrl: getSafeEnv("S3_CDN_URL"),
     folderName: getSafeEnv("S3_FOLDER_NAME"),
   },
+  stripe: {
+    secretKey: getSafeEnv("STRIPE_SECRET_KEY"),
+    webhookSecret: getSafeEnv("STRIPE_WEBHOOK_SECRET"),
+  },
 };
