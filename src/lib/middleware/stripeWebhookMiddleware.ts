@@ -9,7 +9,6 @@ export const stripeWebhookMiddleware = async (ctx: Context, next: Next) => {
     const rawBody = Buffer.concat(chunks);
     ctx.request.rawBody = rawBody.toString("utf8");
     ctx.request.body = JSON.parse(ctx.request.rawBody);
-    return next();
   }
   return next();
 };

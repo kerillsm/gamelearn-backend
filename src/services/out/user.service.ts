@@ -20,6 +20,12 @@ export class UserService {
     });
   }
 
+  static getByStripeConnectAccountId(accountId: string) {
+    return prisma.user.findFirst({
+      where: { stripeConnectAccountId: accountId },
+    });
+  }
+
   static async createUser(data: Prisma.UserCreateInput) {
     return prisma.user.create({
       data,

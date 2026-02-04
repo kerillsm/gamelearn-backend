@@ -66,4 +66,26 @@ export class ReferralService {
       orderBy: { createdAt: "desc" },
     });
   }
+
+  static async getEarningsBySessionId(sessionId: string) {
+    return prisma.referralEarning.findMany({
+      where: { sessionId },
+    });
+  }
+
+  static async markEarningPaidOut(earningId: string) {
+    return prisma.referralEarning.update({
+      where: { id: earningId },
+      data: { isPaidOut: true },
+    });
+  }
+
+  static async deleteUnpaidEarningsBySessionId(sessionId: string) {
+    return prisma.referralEarning.deleteMany({
+      where: {
+        sessionId,
+        isPaidOut: false,
+      },
+    });
+  }
 }

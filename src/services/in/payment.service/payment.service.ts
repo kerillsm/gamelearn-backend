@@ -3,17 +3,21 @@ import { SessionService } from "../../out/session.service";
 import { RecordReferralEarningService } from "../record-referral-earning.service";
 
 export class PaymentService {
-  static async handleCheckoutCompleted(stripeSessionId: string) {
+  static async handleCheckoutCompleted(
+    stripeSessionId: string,
+    paymentIntentId: string,
+  ) {
     const sessions = await SessionService.getByStripeSessionId(stripeSessionId);
     if (sessions.length === 0) {
       console.warn(`No sessions found for stripeSessionId: ${stripeSessionId}`);
       return;
     }
 
-    await SessionService.updateStatusByStripeSessionId(
-      stripeSessionId,
-      SessionStatus.PAYED,
-    );
+    // Update status and store payment intent ID for potential refunds
+    await SessionService.updateByStripeSessionId(stripeSessionId, {
+      status: SessionStatus.PAYED,
+      stripePaymentIntentId: paymentIntentId,
+    });
 
     // Record referral earnings for each session
     for (const session of sessions) {

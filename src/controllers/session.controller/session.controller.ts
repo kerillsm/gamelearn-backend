@@ -9,8 +9,41 @@ import { CancelPendingSessionsService } from "../../services/in/cancel-pending-s
 import { ApproveSessionService } from "../../services/in/approve-session.service";
 import { RejectSessionService } from "../../services/in/reject-session.service";
 import { SetVenueService } from "../../services/in/set-venue.service";
+import { CompleteSessionService } from "../../services/in/complete-session.service";
+import { CancelSessionService } from "../../services/in/cancel-session.service";
+import { ListSessionsService } from "../../services/in/list-sessions.service";
 
 export class SessionController {
+  @AuthRequired()
+  static async getMySessions(ctx: Context) {
+    const user = ctx.state.user;
+    const { page, status } = ctx.query as { page?: string; status?: string };
+
+    const result = await ListSessionsService.listUserSessions(
+      user.id,
+      page ? parseInt(page, 10) : 1,
+      status,
+    );
+
+    ctx.status = 200;
+    ctx.body = result;
+  }
+
+  @AuthRequired()
+  static async getMentorSessions(ctx: Context) {
+    const user = ctx.state.user;
+    const { page, status } = ctx.query as { page?: string; status?: string };
+
+    const result = await ListSessionsService.listMentorSessions(
+      user.id,
+      page ? parseInt(page, 10) : 1,
+      status,
+    );
+
+    ctx.status = 200;
+    ctx.body = result;
+  }
+
   @AuthRequired()
   @Validate(
     Joi.object({
@@ -147,5 +180,46 @@ export class SessionController {
 
     ctx.status = 200;
     ctx.body = { session };
+  }
+
+  @AuthRequired()
+  static async completeSession(ctx: Context) {
+    const user = ctx.state.user;
+    const { sessionId } = ctx.params as { sessionId: string };
+
+    const result = await CompleteSessionService.execute(sessionId, user.id);
+
+    ctx.status = 200;
+    ctx.body = {
+      session: result.session,
+      mentorPayout: result.mentorPayout,
+      referralPayouts: result.referralPayouts,
+    };
+  }
+
+  @AuthRequired()
+  @Validate(
+    Joi.object({
+      reason: Joi.string().optional(),
+      asMentor: Joi.boolean().optional(),
+    }),
+  )
+  static async cancelSession(ctx: Context) {
+    const user = ctx.state.user;
+    const { sessionId } = ctx.params as { sessionId: string };
+    const { reason, asMentor } = ctx.request.body as { reason?: string; asMentor?: boolean };
+
+    const result = await CancelSessionService.execute(
+      sessionId,
+      user.id,
+      asMentor ?? false,
+      reason,
+    );
+
+    ctx.status = 200;
+    ctx.body = {
+      session: result.session,
+      refund: result.refund,
+    };
   }
 }

@@ -3,7 +3,7 @@ import { MentorProfileService } from "../../out/mentorProfile.service";
 import { UserService } from "../../out/user.service";
 import { CreateSessionDTO } from "./create-session.dto";
 import { SESSION_DURATION_BY_TYPE, SessionService } from "../../out/session.service";
-import { SessionStatus, SessionType } from "@prisma/client";
+import { SessionStatus, SessionType, StripeConnectStatus } from "@prisma/client";
 import { StripeService } from "../../out/stripe.service";
 import { appConfig } from "../../../config/appConfig";
 import { PricingService } from "../pricing.service";
@@ -23,6 +23,23 @@ export class CreateSessionService {
       throw new HttpError(404, "Mentor profile not found");
     }
 
+    // Get mentor user for Connect account check
+    const mentorUser = await UserService.getById(mentorProfile.userId);
+    if (!mentorUser) {
+      throw new HttpError(404, "Mentor not found");
+    }
+
+    // Check if mentor has active Stripe Connect account (required for destination charges)
+    const isFreeSession = PricingService.isFreeSession(data.sessionType);
+    if (!isFreeSession) {
+      if (mentorUser.stripeConnectStatus !== StripeConnectStatus.ACTIVE) {
+        throw new HttpError(400, "This mentor is not yet available for booking. Please try again later.");
+      }
+      if (!mentorUser.stripeConnectAccountId) {
+        throw new HttpError(400, "This mentor is not yet available for booking. Please try again later.");
+      }
+    }
+
     // Get mentor's completed sessions count for dynamic fee calculation
     const mentorCompletedSessions = await SessionService.countCompletedSessionsByMentor(
       mentorProfile.userId,
@@ -32,7 +49,6 @@ export class CreateSessionService {
     const clientReferrerId = await ReferralService.getReferrerUserId(user.id);
     const mentorReferrerId = await ReferralService.getReferrerUserId(mentorProfile.userId);
 
-    const isFreeSession = PricingService.isFreeSession(data.sessionType);
     const pricing = PricingService.calculate(
       data.sessionType,
       mentorProfile.price,

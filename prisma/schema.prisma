@@ -7,17 +7,19 @@ datasource db {
 }
 
 model User {
-  id              String          @id @default(uuid())
-  email           String          @unique 
-  name            String          
-  picture         String?         
-  discordUsername String?         
-  slug            String?         @unique
-  role            UserRole        @default(USER)
-  termsAcceptedAt DateTime?       @db.Timestamptz
-  availabilityRules AvailabilityRule[]
-  availabilityExceptions AvailabilityException[]
-  timezone        String?
+  id                      String          @id @default(uuid())
+  email                   String          @unique 
+  name                    String          
+  picture                 String?         
+  discordUsername         String?         
+  slug                    String?         @unique
+  role                    UserRole        @default(USER)
+  termsAcceptedAt         DateTime?       @db.Timestamptz
+  stripeConnectAccountId  String?
+  stripeConnectStatus     StripeConnectStatus @default(NOT_STARTED)
+  availabilityRules       AvailabilityRule[]
+  availabilityExceptions  AvailabilityException[]
+  timezone                String?
 
   createdAt DateTime        @db.Timestamptz @default(now())
   updatedAt DateTime        @db.Timestamptz @updatedAt
@@ -30,6 +32,14 @@ model User {
   referredBy        Referral?      @relation("ReferredUser")
   referralEarnings  ReferralEarning[]
   agreements        Agreement[]
+  payouts           Payout[]
+}
+
+enum StripeConnectStatus {
+  NOT_STARTED
+  PENDING
+  ACTIVE
+  RESTRICTED
 }
 
 enum UserRole {
@@ -141,25 +151,27 @@ enum SessionType {
 }
 
 model Session {
-  id               String   @id @default(uuid())
-  userId           String
-  mentorUserId     String
-  scheduledAt      DateTime @db.Timestamptz
-  status           SessionStatus @default(PENDING)
-  type             SessionType
-  duration         Int
-  price            Float
-  serviceFee       Float
-  mentorEarnings   Float?
-  platformFee      Float?
-  referralDiscount Float?
-  stripeSessionId  String?  @unique
-  venue            String?
-  rejectionReason  String?
+  id                    String   @id @default(uuid())
+  userId                String
+  mentorUserId          String
+  scheduledAt           DateTime @db.Timestamptz
+  status                SessionStatus @default(PENDING)
+  type                  SessionType
+  duration              Int
+  price                 Float
+  serviceFee            Float
+  mentorEarnings        Float?
+  platformFee           Float?
+  referralDiscount      Float?
+  stripeSessionId       String?  @unique
+  stripePaymentIntentId String?
+  venue                 String?
+  rejectionReason       String?
 
   user             User     @relation("UserSessions", fields: [userId], references: [id], onDelete: Cascade)
   mentorUser       User     @relation("MentorSessions", fields: [mentorUserId], references: [id], onDelete: Cascade)
   referralEarnings ReferralEarning[]
+  payouts          Payout[]
 
   createdAt        DateTime @db.Timestamptz @default(now())
   updatedAt        DateTime @db.Timestamptz @updatedAt
@@ -202,6 +214,7 @@ model ReferralEarning {
   isPaidOut      Boolean             @default(false)
   referrerUser   User                @relation(fields: [referrerUserId], references: [id], onDelete: Cascade)
   session        Session             @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  payout         Payout?
 
   createdAt      DateTime @db.Timestamptz @default(now())
 
@@ -226,4 +239,39 @@ model Agreement {
   user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum PayoutType {
+  SESSION_EARNING
+  REFERRAL_BONUS
+}
+
+model Payout {
+  id                 String       @id @default(uuid())
+  userId             String
+  amount             Float
+  stripeTransferId   String?
+  status             PayoutStatus @default(PENDING)
+  type               PayoutType
+  sessionId          String?
+  referralEarningId  String?      @unique
+  failureReason      String?
+
+  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session            Session?     @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  referralEarning    ReferralEarning? @relation(fields: [referralEarningId], references: [id], onDelete: SetNull)
+
+  createdAt          DateTime     @db.Timestamptz @default(now())
+  processedAt        DateTime?    @db.Timestamptz
+
+  @@index([userId])
+  @@index([sessionId])
+  @@index([status])
 }

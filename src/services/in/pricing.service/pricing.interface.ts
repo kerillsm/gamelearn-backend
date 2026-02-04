@@ -7,6 +7,7 @@ export interface PricingResult {
   clientReferralBonus: number;
   mentorReferralBonus: number;
   referralDiscount: number;
+  applicationFee: number; // Platform keeps: platformFee + referral bonuses (for destination charges)
 }
 
 export interface ReferralContext {

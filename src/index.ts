@@ -16,6 +16,7 @@ import { availabilityRoutes } from "./routes/availability.routes";
 import { sessionRoutes } from "./routes/session.routes";
 import { paymentRoutes } from "./routes/payment.routes";
 import { referralRoutes } from "./routes/referral.routes";
+import { connectRoutes } from "./routes/connect.routes";
 
 // Initialize Koa app
 const app = new Koa();
@@ -34,7 +35,14 @@ app.use(
   }),
 );
 app.use(stripeWebhookMiddleware);
-app.use(koaBody());
+// Conditionally apply koaBody - skip for webhook (already parsed)
+const koaBodyMiddleware = koaBody();
+app.use(async (ctx, next) => {
+  if (ctx.path === "/payment/webhook" && ctx.method === "POST") {
+    return next();
+  }
+  return koaBodyMiddleware(ctx, next);
+});
 
 // Routes
 router.get("/health", async (ctx) => {
@@ -61,6 +69,11 @@ router.use(
   "/referral",
   referralRoutes.routes(),
   referralRoutes.allowedMethods(),
+);
+router.use(
+  "/connect",
+  connectRoutes.routes(),
+  connectRoutes.allowedMethods(),
 );
 app.use(router.routes()).use(router.allowedMethods());
 

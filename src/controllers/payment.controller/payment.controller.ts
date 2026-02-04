@@ -1,6 +1,7 @@
 import { Context } from "koa";
 import { StripeService } from "../../services/out/stripe.service";
 import { PaymentService } from "../../services/in/payment.service";
+import { HandleConnectAccountUpdatedService } from "../../services/in/handle-connect-account-updated.service";
 import { HttpError } from "../../lib/formatters/httpError";
 
 export class PaymentController {
@@ -29,7 +30,10 @@ export class PaymentController {
       case "checkout.session.completed": {
         if (StripeService.isCheckoutSessionEvent(event)) {
           const session = event.data.object;
-          await PaymentService.handleCheckoutCompleted(session.id);
+          const paymentIntentId = typeof session.payment_intent === "string" 
+            ? session.payment_intent 
+            : session.payment_intent?.id ?? "";
+          await PaymentService.handleCheckoutCompleted(session.id, paymentIntentId);
         }
         break;
       }
@@ -37,6 +41,13 @@ export class PaymentController {
         if (StripeService.isCheckoutSessionEvent(event)) {
           const session = event.data.object;
           await PaymentService.handleCheckoutExpired(session.id);
+        }
+        break;
+      }
+      case "account.updated": {
+        if (StripeService.isAccountEvent(event)) {
+          const account = event.data.object;
+          await HandleConnectAccountUpdatedService.execute(account.id);
         }
         break;
       }

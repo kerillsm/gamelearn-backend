@@ -53,6 +53,16 @@ export class SessionService {
     });
   }
 
+  static updateByStripeSessionId(
+    stripeSessionId: string,
+    data: Prisma.SessionUpdateInput,
+  ) {
+    return prisma.session.updateMany({
+      where: { stripeSessionId },
+      data,
+    });
+  }
+
   static deleteByStripeSessionId(stripeSessionId: string) {
     return prisma.session.deleteMany({
       where: { stripeSessionId },
@@ -94,5 +104,34 @@ export class SessionService {
         status: SessionStatus.PENDING,
       },
     });
+  }
+
+  static async listSessions(
+    filter: { userId?: string; mentorUserId?: string },
+    options: { page: number; pageSize: number; status?: SessionStatus },
+  ) {
+    const { page, pageSize, status } = options;
+    const where: Prisma.SessionWhereInput = {
+      ...filter,
+      ...(status && { status }),
+    };
+
+    const userSelect = { id: true, name: true, picture: true, slug: true };
+
+    const [sessions, total] = await Promise.all([
+      prisma.session.findMany({
+        where,
+        include: {
+          user: { select: userSelect },
+          mentorUser: { select: userSelect },
+        },
+        orderBy: { scheduledAt: "desc" },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      prisma.session.count({ where }),
+    ]);
+
+    return { sessions, total };
   }
 }
