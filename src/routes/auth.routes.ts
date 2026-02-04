@@ -52,6 +52,14 @@ router.get("/discord", (ctx, next) =>
 
 router.get(
   "/discord/callback",
+  async (ctx, next) => {
+    // Check if Discord returned an error (user cancelled)
+    if (ctx.query.error) {
+      ctx.redirect(`${appConfig.frontendUrl}/auth-error`);
+      return;
+    }
+    await next();
+  },
   passport.authenticate("discord", {
     session: false,
   }),
