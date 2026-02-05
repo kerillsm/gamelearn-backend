@@ -33,6 +33,7 @@ model User {
   referralEarnings  ReferralEarning[]
   agreements        Agreement[]
   payouts           Payout[]
+  mentorApplication MentorApplication?
 }
 
 enum StripeConnectStatus {
@@ -274,4 +275,34 @@ model Payout {
   @@index([userId])
   @@index([sessionId])
   @@index([status])
+}
+
+enum MentorApplicationStatus {
+  PENDING
+  REJECTED
+  APPROVED
+}
+
+model MentorApplication {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+
+  name        String
+  game        MentorGame
+  rating      Float
+  experiencePlaying String
+  experienceTeaching String?
+  socialMedia String?
+  aboutYourself  String?
+  contactInfo String
+  steamProfile String
+
+  status      MentorApplicationStatus @default(PENDING)
+
+  rejectionReason String?
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @db.Timestamptz @default(now())
+  updatedAt   DateTime @db.Timestamptz @updatedAt
 }
