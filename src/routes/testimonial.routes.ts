@@ -11,6 +11,14 @@ router.get(
 );
 
 router.get(
+  "/user/all",
+  authMiddleware,
+  TestimonialController.getUserTestimonials,
+);
+
+router.get("/latest", TestimonialController.getLatestTestimonials);
+
+router.get(
   "/user/:slug",
   authMiddleware,
   TestimonialController.getUserTestimonialBySlug,

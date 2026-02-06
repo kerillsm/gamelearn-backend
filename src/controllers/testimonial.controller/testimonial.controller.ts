@@ -5,6 +5,7 @@ import { AuthRequired } from "../../lib/decorators/authRequired.decorator";
 import { MentorProfileService } from "../../services/out/mentorProfile.service";
 import { GetUserTestimonialBySlugService } from "../../services/in/get-user-testimonial-by-slug.service";
 import { UpsertTestimonialService } from "../../services/in/upsert-testimonial.service";
+import { TestimonialService } from "../../services/out/testimonial.service";
 
 export class TestimonialController {
   @AuthRequired()
@@ -52,5 +53,22 @@ export class TestimonialController {
 
     ctx.status = 200;
     ctx.body = { testimonial };
+  }
+
+  @AuthRequired()
+  static async getUserTestimonials(ctx: Context) {
+    const userId = ctx.state.user.id!;
+    const testimonials =
+      await TestimonialService.getTestimonialsGivenByUser(userId);
+
+    ctx.status = 200;
+    ctx.body = { testimonials };
+  }
+
+  static async getLatestTestimonials(ctx: Context) {
+    const testimonials = await TestimonialService.getLatestTestimonials();
+
+    ctx.status = 200;
+    ctx.body = { testimonials };
   }
 }

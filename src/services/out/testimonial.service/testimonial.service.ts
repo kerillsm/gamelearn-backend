@@ -1,4 +1,4 @@
-import { TestimonialStatus } from "@prisma/client";
+import { MentorProfileStatus, TestimonialStatus } from "@prisma/client";
 import { prisma } from "../../../lib/orm/prisma";
 
 export class TestimonialService {
@@ -70,6 +70,18 @@ export class TestimonialService {
       orderBy: {
         createdAt: "desc",
       },
+      include: {
+        mentorUser: {
+          include: {
+            mentorProfiles: {
+              where: {
+                status: MentorProfileStatus.ACTIVE,
+              },
+            },
+          },
+        },
+        user: true,
+      },
     });
   }
 
@@ -94,6 +106,30 @@ export class TestimonialService {
         mentorUser: {
           slug,
         },
+      },
+    });
+  }
+
+  static getLatestTestimonials() {
+    return prisma.testimonial.findMany({
+      where: {
+        status: TestimonialStatus.APPROVED,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 10,
+      include: {
+        mentorUser: {
+          include: {
+            mentorProfiles: {
+              where: {
+                status: MentorProfileStatus.ACTIVE,
+              },
+            },
+          },
+        },
+        user: true,
       },
     });
   }
