@@ -1,4 +1,4 @@
-import { MentorProfileStatus, TestimonialStatus } from "@prisma/client";
+import { MentorProfileStatus, Prisma, TestimonialStatus } from "@prisma/client";
 import { prisma } from "../../../lib/orm/prisma";
 
 export class TestimonialService {
@@ -42,20 +42,6 @@ export class TestimonialService {
       data: {
         rating: data.rating,
         content: data.content,
-      },
-    });
-  }
-
-  static getTestimonialsForMentor(mentorUserId: string, skip = 0, take = 10) {
-    return prisma.testimonial.findMany({
-      where: {
-        mentorUserId,
-        status: TestimonialStatus.APPROVED,
-      },
-      skip,
-      take,
-      orderBy: {
-        createdAt: "desc",
       },
     });
   }
@@ -107,6 +93,30 @@ export class TestimonialService {
           slug,
         },
       },
+    });
+  }
+
+  static getMentorTestimonialsBySlug(slug: string, take = 10) {
+    return prisma.testimonial.findMany({
+      where: {
+        mentorUser: {
+          slug,
+        },
+        status: TestimonialStatus.APPROVED,
+      },
+      take,
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: {
+        user: true,
+      },
+    });
+  }
+
+  static getTestimonialsCount(where: Prisma.TestimonialWhereInput) {
+    return prisma.testimonial.count({
+      where,
     });
   }
 

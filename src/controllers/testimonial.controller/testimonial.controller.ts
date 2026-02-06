@@ -6,6 +6,7 @@ import { MentorProfileService } from "../../services/out/mentorProfile.service";
 import { GetUserTestimonialBySlugService } from "../../services/in/get-user-testimonial-by-slug.service";
 import { UpsertTestimonialService } from "../../services/in/upsert-testimonial.service";
 import { TestimonialService } from "../../services/out/testimonial.service";
+import { GetMentorTestimonialsBySlugService } from "../../services/in/get-mentor-testimonials-by-slug.service";
 
 export class TestimonialController {
   @AuthRequired()
@@ -70,5 +71,16 @@ export class TestimonialController {
 
     ctx.status = 200;
     ctx.body = { testimonials };
+  }
+
+  static async getMentorTestimonials(ctx: Context) {
+    const slug = ctx.params.slug;
+    const take = Number(ctx.query.take) || 4;
+
+    const { testimonials, count } =
+      await GetMentorTestimonialsBySlugService.execute(slug, take);
+
+    ctx.status = 200;
+    ctx.body = { testimonials, count };
   }
 }

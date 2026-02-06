@@ -30,4 +30,6 @@ router.post(
   TestimonialController.upsertTestimonial,
 );
 
+router.get("/mentor/:slug", TestimonialController.getMentorTestimonials);
+
 export { router as testimonialRoutes };
