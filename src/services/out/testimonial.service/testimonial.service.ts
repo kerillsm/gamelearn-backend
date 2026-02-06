@@ -143,4 +143,13 @@ export class TestimonialService {
       },
     });
   }
+
+  static getTestimonialsAverageRating(where: Prisma.TestimonialWhereInput) {
+    return prisma.testimonial.aggregate({
+      where,
+      _avg: {
+        rating: true,
+      },
+    });
+  }
 }

@@ -10,11 +10,22 @@ export class GetMentorTestimonialsBySlugService {
       },
     });
 
+    const average = await TestimonialService.getTestimonialsAverageRating({
+      status: TestimonialStatus.APPROVED,
+      mentorUser: {
+        slug,
+      },
+    });
+
     const testimonials = await TestimonialService.getMentorTestimonialsBySlug(
       slug,
       take,
     );
 
-    return { testimonials, count: testimonialsCount };
+    return {
+      testimonials,
+      count: testimonialsCount,
+      average: average._avg?.rating || 0,
+    };
   }
 }

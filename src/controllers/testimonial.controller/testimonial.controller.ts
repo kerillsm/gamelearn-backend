@@ -77,10 +77,10 @@ export class TestimonialController {
     const slug = ctx.params.slug;
     const take = Number(ctx.query.take) || 4;
 
-    const { testimonials, count } =
+    const { testimonials, count, average } =
       await GetMentorTestimonialsBySlugService.execute(slug, take);
 
     ctx.status = 200;
-    ctx.body = { testimonials, count };
+    ctx.body = { testimonials, count, average };
   }
 }
