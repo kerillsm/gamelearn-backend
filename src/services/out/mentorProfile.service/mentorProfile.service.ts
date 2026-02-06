@@ -1,4 +1,4 @@
-import { MentorProfileStatus, Prisma } from "@prisma/client";
+import { MentorProfileStatus, Prisma, SessionStatus } from "@prisma/client";
 import { prisma } from "../../../lib/orm/prisma";
 
 export class MentorProfileService {
@@ -62,6 +62,31 @@ export class MentorProfileService {
   static async create(data: Prisma.MentorProfileCreateInput) {
     return prisma.mentorProfile.create({
       data,
+    });
+  }
+
+  static async getPendingTestimonialsProfiles(userId: string) {
+    return prisma.mentorProfile.findMany({
+      where: {
+        user: {
+          sessionsAsMentor: {
+            some: {
+              userId,
+              status: SessionStatus.COMPLETED,
+            },
+          },
+          testimonialsReceived: {
+            none: {
+              userId,
+            },
+          },
+        },
+      },
+      include: {
+        user: {
+          select: { slug: true },
+        },
+      },
     });
   }
 }

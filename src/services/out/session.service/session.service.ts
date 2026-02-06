@@ -134,4 +134,20 @@ export class SessionService {
 
     return { sessions, total };
   }
+
+  static async getUserSessionsWithMentor(
+    userId: string,
+    mentorSlug: string,
+    status?: SessionStatus,
+  ) {
+    return prisma.session.findMany({
+      where: {
+        userId,
+        mentorUser: {
+          slug: mentorSlug,
+        },
+        ...(status && { status }),
+      },
+    });
+  }
 }

@@ -34,6 +34,8 @@ model User {
   agreements        Agreement[]
   payouts           Payout[]
   mentorApplication MentorApplication?
+  testimonialsGiven  Testimonial[]  @relation("UserTestimonialsGiven")
+  testimonialsReceived Testimonial[] @relation("MentorTestimonialsReceived")
 }
 
 enum StripeConnectStatus {
@@ -305,4 +307,29 @@ model MentorApplication {
 
   createdAt   DateTime @db.Timestamptz @default(now())
   updatedAt   DateTime @db.Timestamptz @updatedAt
+}
+
+enum TestimonialStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Testimonial {
+  id           String   @id @default(uuid())
+  userId       String
+  mentorUserId String
+  content      String
+  rating       Int
+
+  status       TestimonialStatus @default(PENDING)
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade, name: "UserTestimonialsGiven")
+  mentorUser   User     @relation(fields: [mentorUserId], references: [id], onDelete: Cascade, name: "MentorTestimonialsReceived")
+
+  createdAt   DateTime @db.Timestamptz @default(now())
+  updatedAt   DateTime @db.Timestamptz @updatedAt
+
+  @@index([mentorUserId])
+  @@unique([userId, mentorUserId])
 }

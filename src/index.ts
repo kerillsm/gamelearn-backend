@@ -18,6 +18,7 @@ import { paymentRoutes } from "./routes/payment.routes";
 import { referralRoutes } from "./routes/referral.routes";
 import { connectRoutes } from "./routes/connect.routes";
 import { mentorApplicationRoutes } from "./routes/mentorApplication.routes";
+import { testimonialRoutes } from "./routes/testimonial.routes";
 
 // Initialize Koa app
 const app = new Koa();
@@ -76,6 +77,11 @@ router.use(
   "/mentor-application",
   mentorApplicationRoutes.routes(),
   mentorApplicationRoutes.allowedMethods(),
+);
+router.use(
+  "/testimonial",
+  testimonialRoutes.routes(),
+  testimonialRoutes.allowedMethods(),
 );
 app.use(router.routes()).use(router.allowedMethods());
 
