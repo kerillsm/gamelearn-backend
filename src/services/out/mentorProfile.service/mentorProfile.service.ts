@@ -42,6 +42,13 @@ export class MentorProfileService {
     return { mentorProfiles, totalCount };
   }
 
+  static async getById(id: string) {
+    return prisma.mentorProfile.findUnique({
+      where: { id },
+      include: { user: { select: { slug: true } } },
+    });
+  }
+
   static async getByUserId(userId: string, status: MentorProfileStatus) {
     return prisma.mentorProfile.findUnique({
       where: {
@@ -50,6 +57,35 @@ export class MentorProfileService {
           status,
         },
       },
+    });
+  }
+
+  static async getMentorProfilesAll(params: { page?: number; take?: number }) {
+    const { page = 1, take = 10 } = params;
+    const mentorProfiles = await prisma.mentorProfile.findMany({
+      skip: (page - 1) * take,
+      take,
+      include: { user: { select: { slug: true } } },
+    });
+    const totalCount = await prisma.mentorProfile.count();
+    return { mentorProfiles, totalCount };
+  }
+
+  static async getPendingProfiles() {
+    return prisma.mentorProfile.findMany({
+      where: { status: MentorProfileStatus.PENDING },
+      include: { user: { select: { slug: true } } },
+    });
+  }
+
+  static async updateStatus(
+    id: string,
+    status: MentorProfileStatus,
+    rejectionReason?: string,
+  ) {
+    return prisma.mentorProfile.update({
+      where: { id },
+      data: { status, ...(rejectionReason != null && { rejectionReason }) },
     });
   }
 
