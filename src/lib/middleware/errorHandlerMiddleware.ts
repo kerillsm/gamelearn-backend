@@ -1,4 +1,6 @@
+import * as Sentry from "@sentry/node";
 import { Context, Next } from "koa";
+import { appConfig } from "../../config/appConfig";
 
 export const errorHandlerMiddleware = async (ctx: Context, next: Next) => {
   try {
@@ -20,6 +22,10 @@ export const errorHandlerMiddleware = async (ctx: Context, next: Next) => {
     };
 
     console.error("Error occurred:", err);
+
+    if (status >= 500 && appConfig.sentry.dsn) {
+      Sentry.captureException(err);
+    }
 
     ctx.app.emit("error", err, ctx);
   }

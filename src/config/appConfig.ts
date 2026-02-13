@@ -25,4 +25,7 @@ export const appConfig = {
     secretKey: getSafeEnv("STRIPE_SECRET_KEY"),
     webhookSecret: getSafeEnv("STRIPE_WEBHOOK_SECRET"),
   },
+  sentry: {
+    dsn: process.env.SENTRY_DSN ?? undefined,
+  },
 };

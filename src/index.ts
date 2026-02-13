@@ -1,4 +1,6 @@
 import "dotenv/config";
+import "./instrument";
+import * as Sentry from "@sentry/node";
 import Koa from "koa";
 import Router from "koa-router";
 import cors from "@koa/cors";
@@ -20,9 +22,11 @@ import { connectRoutes } from "./routes/connect.routes";
 import { mentorApplicationRoutes } from "./routes/mentorApplication.routes";
 import { testimonialRoutes } from "./routes/testimonial.routes";
 import { adminMentorProfileRoutes } from "./routes/adminMentorProfile.routes";
+import { adminMentorApplicationRoutes } from "./routes/adminMentorApplication.routes";
 
 // Initialize Koa app
 const app = new Koa();
+Sentry.setupKoaErrorHandler(app);
 // Enable proxy trust to get correct client IP when behind a proxy
 app.proxy = true;
 // Initialize router
@@ -88,6 +92,11 @@ router.use(
   "/admin/mentor-profiles",
   adminMentorProfileRoutes.routes(),
   adminMentorProfileRoutes.allowedMethods(),
+);
+router.use(
+  "/admin/mentor-applications",
+  adminMentorApplicationRoutes.routes(),
+  adminMentorApplicationRoutes.allowedMethods(),
 );
 app.use(router.routes()).use(router.allowedMethods());
 
