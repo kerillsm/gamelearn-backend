@@ -50,26 +50,26 @@ export class ReferralService {
 
   static async createEarning(
     referrerUserId: string,
-    sessionId: string,
+    sessionPackageId: string,
     amount: number,
     type: ReferralEarningType = ReferralEarningType.CLIENT_REFERRAL,
   ) {
     return prisma.referralEarning.create({
-      data: { referrerUserId, sessionId, amount, type },
+      data: { referrerUserId, sessionPackageId, amount, type },
     });
   }
 
   static async getEarningsByUserId(userId: string) {
     return prisma.referralEarning.findMany({
       where: { referrerUserId: userId },
-      include: { session: true },
+      include: { sessionPackage: true },
       orderBy: { createdAt: "desc" },
     });
   }
 
-  static async getEarningsBySessionId(sessionId: string) {
+  static async getEarningsBySessionPackageId(sessionPackageId: string) {
     return prisma.referralEarning.findMany({
-      where: { sessionId },
+      where: { sessionPackageId },
     });
   }
 
@@ -80,10 +80,10 @@ export class ReferralService {
     });
   }
 
-  static async deleteUnpaidEarningsBySessionId(sessionId: string) {
+  static async deleteUnpaidEarningsBySessionPackageId(sessionPackageId: string) {
     return prisma.referralEarning.deleteMany({
       where: {
-        sessionId,
+        sessionPackageId,
         isPaidOut: false,
       },
     });

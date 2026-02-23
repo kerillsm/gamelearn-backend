@@ -24,7 +24,6 @@ export class ProcessPayoutService {
       amount: earning.amount,
       type: PayoutType.REFERRAL_BONUS,
       referralEarningId: earning.id,
-      sessionId: earning.sessionId,
     });
 
     try {
@@ -54,8 +53,8 @@ export class ProcessPayoutService {
     }
   }
 
-  static async processReferralPayouts(sessionId: string) {
-    const referralEarnings = await ReferralService.getEarningsBySessionId(sessionId);
+  static async processReferralPayouts(sessionPackageId: string) {
+    const referralEarnings = await ReferralService.getEarningsBySessionPackageId(sessionPackageId);
     const results: Array<{ earningId: string; success: boolean }> = [];
 
     for (const earning of referralEarnings) {

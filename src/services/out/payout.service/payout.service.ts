@@ -6,7 +6,7 @@ export class PayoutService {
     userId: string;
     amount: number;
     type: PayoutType;
-    sessionId?: string;
+    sessionPackageId?: string;
     referralEarningId?: string;
   }) {
     return prisma.payout.create({ data });
@@ -29,10 +29,10 @@ export class PayoutService {
     });
   }
 
-  static async getCompletedBySessionId(sessionId: string) {
+  static async getCompletedBySessionPackageId(sessionPackageId: string) {
     return prisma.payout.findFirst({
       where: {
-        sessionId,
+        sessionPackageId,
         type: PayoutType.SESSION_EARNING,
         status: PayoutStatus.COMPLETED,
       },
@@ -52,7 +52,7 @@ export class PayoutService {
   static async getByUserId(userId: string) {
     return prisma.payout.findMany({
       where: { userId },
-      include: { session: true, referralEarning: true },
+      include: { sessionPackage: true, referralEarning: true },
       orderBy: { createdAt: "desc" },
     });
   }

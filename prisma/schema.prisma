@@ -26,8 +26,8 @@ model User {
 
   authAccounts      AuthAccount[]
   mentorProfiles    MentorProfile[]
-  sessionsAsUser    Session[]      @relation("UserSessions")
-  sessionsAsMentor  Session[]    @relation("MentorSessions")
+  mentorSessionPacks   SessionPackage[] @relation("mentorSessionPacks")
+  applicantSessionPacks SessionPackage[] @relation("applicantSessionPacks")
   referralCode      ReferralCode?  @relation("ReferralCodeOwner")
   referredBy        Referral?      @relation("ReferredUser")
   referralEarnings  ReferralEarning[]
@@ -138,6 +138,47 @@ model AvailabilityException {
   @@index([mentorUserId])
 }
 
+enum SessionPackageType {
+  VIBE_CHECK
+  ONE_SESSION
+  SESSIONS_PACK
+}
+
+enum SessionPackStatus {
+  PENDING
+  PAYED
+  APPROVED
+  REJECTED
+  COMPLETED
+  CANCELED
+}
+
+model SessionPackage {
+  id                      String    @id @default(uuid())
+  type                    SessionPackageType
+  status                  SessionPackStatus  @default(PENDING)
+  duration                Int
+  price                   Float
+  mentorId                String
+  applicantId             String
+  stripeSessionPackageId  String?   @unique
+  stripePaymentIntentId   String?
+  venue                   String?
+  rejectionReason         String?
+
+  createdAt DateTime @db.Timestamptz(6) @default(now())
+  updatedAt DateTime @db.Timestamptz(6) @updatedAt
+
+  mentor    User     @relation("mentorSessionPacks", fields: [mentorId], references: [id], onDelete: Cascade)
+  applicant User     @relation("applicantSessionPacks", fields: [applicantId], references: [id], onDelete: Cascade)
+  sessions  Session[]
+  referralEarnings ReferralEarning[]
+  payouts          Payout[]
+
+  @@index([mentorId])
+  @@index([applicantId])
+}
+
 enum SessionStatus {
   PENDING
   PAYED
@@ -147,40 +188,23 @@ enum SessionStatus {
   CANCELED
 }
 
-enum SessionType {
-  VIBE_CHECK
-  ONE_SESSION
-  SESSIONS_PACK
-}
-
 model Session {
   id                    String   @id @default(uuid())
-  userId                String
-  mentorUserId          String
+  sessionPackageId     String
   scheduledAt           DateTime @db.Timestamptz
   status                SessionStatus @default(PENDING)
-  type                  SessionType
   duration              Int
-  price                 Float
   serviceFee            Float
   mentorEarnings        Float?
   platformFee           Float?
   referralDiscount      Float?
-  stripeSessionId       String?  @unique
-  stripePaymentIntentId String?
-  venue                 String?
-  rejectionReason       String?
 
-  user             User     @relation("UserSessions", fields: [userId], references: [id], onDelete: Cascade)
-  mentorUser       User     @relation("MentorSessions", fields: [mentorUserId], references: [id], onDelete: Cascade)
-  referralEarnings ReferralEarning[]
-  payouts          Payout[]
+  sessionPackage SessionPackage @relation(fields: [sessionPackageId], references: [id], onDelete: Cascade)
 
   createdAt        DateTime @db.Timestamptz @default(now())
   updatedAt        DateTime @db.Timestamptz @updatedAt
 
-  @@index([userId])
-  @@index([mentorUserId])
+  @@index([sessionPackageId])
 }
 
 model ReferralCode {
@@ -209,20 +233,20 @@ enum ReferralEarningType {
 }
 
 model ReferralEarning {
-  id             String              @id @default(uuid())
-  referrerUserId String
-  sessionId      String
-  amount         Float
-  type           ReferralEarningType @default(CLIENT_REFERRAL)
-  isPaidOut      Boolean             @default(false)
-  referrerUser   User                @relation(fields: [referrerUserId], references: [id], onDelete: Cascade)
-  session        Session             @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  payout         Payout?
+  id                String              @id @default(uuid())
+  referrerUserId    String
+  sessionPackageId  String
+  amount            Float
+  type              ReferralEarningType @default(CLIENT_REFERRAL)
+  isPaidOut         Boolean             @default(false)
+  referrerUser      User                @relation(fields: [referrerUserId], references: [id], onDelete: Cascade)
+  sessionPackage    SessionPackage      @relation(fields: [sessionPackageId], references: [id], onDelete: Cascade)
+  payout            Payout?
 
   createdAt      DateTime @db.Timestamptz @default(now())
 
   @@index([referrerUserId])
-  @@index([sessionId])
+  @@index([sessionPackageId])
 }
 
 enum AgreementType {
@@ -263,19 +287,19 @@ model Payout {
   stripeTransferId   String?
   status             PayoutStatus @default(PENDING)
   type               PayoutType
-  sessionId          String?
+  sessionPackageId   String?
   referralEarningId  String?      @unique
   failureReason      String?
 
   user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  session            Session?     @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  sessionPackage     SessionPackage? @relation(fields: [sessionPackageId], references: [id], onDelete: SetNull)
   referralEarning    ReferralEarning? @relation(fields: [referralEarningId], references: [id], onDelete: SetNull)
 
   createdAt          DateTime     @db.Timestamptz @default(now())
   processedAt        DateTime?    @db.Timestamptz
 
   @@index([userId])
-  @@index([sessionId])
+  @@index([sessionPackageId])
   @@index([status])
 }
 

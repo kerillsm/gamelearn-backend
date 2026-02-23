@@ -1,4 +1,4 @@
-import { SessionType, User } from "@prisma/client";
+import { SessionPackageType, User } from "@prisma/client";
 import { fetchAvailabilityDataForUserMonth } from "./fetch-availability-data-for-user-month";
 import { DateTime } from "luxon";
 import { getAvailableIntervalsForDate } from "./utils/getAvailableIntervalsForDate.util";
@@ -8,7 +8,7 @@ export class MentorAvailabilityService {
     user: User,
     mentorUserId: string,
     lDate: DateTime,
-    sessionType: SessionType,
+    sessionType: SessionPackageType,
   ) {
     if (!user || !user.timezone) {
       throw new Error("User not found or timezone not set");

@@ -1,83 +1,28 @@
-import { Prisma, SessionStatus, SessionType } from "@prisma/client";
+import { Prisma, SessionStatus } from "@prisma/client";
 import { prisma } from "../../../lib/orm/prisma";
 
 export class SessionService {
-  static getMentorSessions(
-    mentorUserId: string,
-    where?: Prisma.SessionWhereInput,
-  ) {
-    return prisma.session.findMany({
-      where: {
-        mentorUserId,
-        ...where,
-      },
-    });
-  }
-
   static createSession(data: Prisma.SessionCreateInput) {
-    return prisma.session.create({
-      data,
-    });
-  }
-
-  static getVibeCheckSession(userId: string, mentorUserId: string) {
-    return prisma.session.findFirst({
-      where: {
-        userId,
-        mentorUserId,
-        type: SessionType.VIBE_CHECK,
-      },
-    });
-  }
-
-  static deleteById(sessionId: string) {
-    return prisma.session.delete({
-      where: { id: sessionId },
-    });
-  }
-
-  static updateStripeSessionId(sessionIds: string[], stripeSessionId: string) {
-    return prisma.session.updateMany({
-      where: { id: { in: sessionIds } },
-      data: { stripeSessionId },
-    });
-  }
-
-  static updateStatusByStripeSessionId(
-    stripeSessionId: string,
-    status: SessionStatus,
-  ) {
-    return prisma.session.updateMany({
-      where: { stripeSessionId },
-      data: { status },
-    });
-  }
-
-  static updateByStripeSessionId(
-    stripeSessionId: string,
-    data: Prisma.SessionUpdateInput,
-  ) {
-    return prisma.session.updateMany({
-      where: { stripeSessionId },
-      data,
-    });
-  }
-
-  static deleteByStripeSessionId(stripeSessionId: string) {
-    return prisma.session.deleteMany({
-      where: { stripeSessionId },
-    });
-  }
-
-  static getByStripeSessionId(stripeSessionId: string) {
-    return prisma.session.findMany({
-      where: { stripeSessionId },
-    });
+    return prisma.session.create({ data });
   }
 
   static getById(sessionId: string) {
     return prisma.session.findUnique({
       where: { id: sessionId },
+    });
+  }
+
+  static getByIdWithPackage(sessionId: string) {
+    return prisma.session.findUnique({
+      where: { id: sessionId },
+      include: {
+        sessionPackage: {
+          include: {
+            mentor: { select: { id: true, name: true, picture: true, slug: true } },
+            applicant: { select: { id: true, name: true, picture: true, slug: true } },
+          },
+        },
+      },
     });
   }
 
@@ -88,10 +33,29 @@ export class SessionService {
     });
   }
 
-  static countCompletedSessionsByMentor(mentorUserId: string) {
+  static deleteById(sessionId: string) {
+    return prisma.session.delete({
+      where: { id: sessionId },
+    });
+  }
+
+  static deleteManyBySessionPackageId(sessionPackageId: string) {
+    return prisma.session.deleteMany({
+      where: { sessionPackageId },
+    });
+  }
+
+  static findManyBySessionPackageId(sessionPackageId: string) {
+    return prisma.session.findMany({
+      where: { sessionPackageId },
+      orderBy: { scheduledAt: "asc" },
+    });
+  }
+
+  static countCompletedSessionsByMentor(mentorId: string) {
     return prisma.session.count({
       where: {
-        mentorUserId,
+        sessionPackage: { mentorId },
         status: SessionStatus.COMPLETED,
       },
     });
@@ -106,48 +70,19 @@ export class SessionService {
     });
   }
 
-  static async listSessions(
-    filter: { userId?: string; mentorUserId?: string },
-    options: { page: number; pageSize: number; status?: SessionStatus },
-  ) {
-    const { page, pageSize, status } = options;
-    const where: Prisma.SessionWhereInput = {
-      ...filter,
-      ...(status && { status }),
-    };
-
-    const userSelect = { id: true, name: true, picture: true, slug: true };
-
-    const [sessions, total] = await Promise.all([
-      prisma.session.findMany({
-        where,
-        include: {
-          user: { select: userSelect },
-          mentorUser: { select: userSelect },
-        },
-        orderBy: { scheduledAt: "desc" },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-      }),
-      prisma.session.count({ where }),
-    ]);
-
-    return { sessions, total };
-  }
-
-  static async getUserSessionsWithMentor(
-    userId: string,
-    mentorSlug: string,
-    status?: SessionStatus,
+  static getSessionsByMentorForDateRange(
+    mentorId: string,
+    start: Date,
+    end: Date,
+    statuses: SessionStatus[] = [SessionStatus.APPROVED, SessionStatus.COMPLETED],
   ) {
     return prisma.session.findMany({
       where: {
-        userId,
-        mentorUser: {
-          slug: mentorSlug,
-        },
-        ...(status && { status }),
+        sessionPackage: { mentorId },
+        scheduledAt: { gte: start, lte: end },
+        status: { in: statuses },
       },
+      orderBy: { scheduledAt: "asc" },
     });
   }
 }

@@ -1,5 +1,5 @@
-import { SessionStatus } from "@prisma/client";
-import { SessionService } from "../../out/session.service";
+import { SessionPackStatus } from "@prisma/client";
+import { SessionPackageService } from "../../out/sessionPackage.service";
 import { HttpError } from "../../../lib/formatters/httpError";
 import { TestimonialService } from "../../out/testimonial.service";
 import { MentorProfileService } from "../../out/mentorProfile.service";
@@ -15,13 +15,13 @@ export class UpsertTestimonialService {
       throw new HttpError(404, "Mentor not found.");
     }
 
-    const userSessions = await SessionService.getUserSessionsWithMentor(
+    const userPackages = await SessionPackageService.getApplicantPackagesWithMentorBySlug(
       userId,
       mentorSlug,
-      SessionStatus.COMPLETED,
+      SessionPackStatus.COMPLETED,
     );
 
-    if (userSessions.length === 0) {
+    if (userPackages.length === 0) {
       throw new HttpError(
         403,
         "User has not completed any sessions with this mentor.",

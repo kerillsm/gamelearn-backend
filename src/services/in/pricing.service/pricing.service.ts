@@ -1,4 +1,4 @@
-import { SessionType } from "@prisma/client";
+import { SessionPackageType } from "@prisma/client";
 import { assertUnreachable } from "../../../lib/formatters/assertUnreachable";
 import { PricingResult, ReferralContext } from "./pricing.interface";
 
@@ -16,7 +16,7 @@ const SERVICE_FEE_TIERS = [
 
 export class PricingService {
   static calculate(
-    sessionType: SessionType,
+    sessionType: SessionPackageType,
     mentorPrice: number,
     mentorCompletedSessions: number = 0,
     referralContext?: ReferralContext,
@@ -25,15 +25,15 @@ export class PricingService {
     let sessionPrice: number;
 
     switch (sessionType) {
-      case SessionType.VIBE_CHECK:
+      case SessionPackageType.VIBE_CHECK:
         totalPrice = 0;
         sessionPrice = 0;
         break;
-      case SessionType.ONE_SESSION:
+      case SessionPackageType.ONE_SESSION:
         totalPrice = mentorPrice;
         sessionPrice = mentorPrice;
         break;
-      case SessionType.SESSIONS_PACK:
+      case SessionPackageType.SESSIONS_PACK:
         totalPrice = mentorPrice * SESSIONS_IN_PACK_COUNT * (1 - SESSIONS_PACK_DISCOUNT);
         sessionPrice = totalPrice / SESSIONS_IN_PACK_COUNT;
         break;
@@ -103,11 +103,11 @@ export class PricingService {
     return SERVICE_FEE_TIERS[SERVICE_FEE_TIERS.length - 1].fee;
   }
 
-  static isFreeSession(sessionType: SessionType): boolean {
-    return sessionType === SessionType.VIBE_CHECK;
+  static isFreeSession(sessionType: SessionPackageType): boolean {
+    return sessionType === SessionPackageType.VIBE_CHECK;
   }
 
-  static getSessionsCount(sessionType: SessionType): number {
-    return sessionType === SessionType.SESSIONS_PACK ? SESSIONS_IN_PACK_COUNT : 1;
+  static getSessionsCount(sessionType: SessionPackageType): number {
+    return sessionType === SessionPackageType.SESSIONS_PACK ? SESSIONS_IN_PACK_COUNT : 1;
   }
 }

@@ -7,7 +7,7 @@ const stripe = new Stripe(appConfig.stripe.secretKey);
 export class StripeService {
   static async createCheckoutSession(params: CreateCheckoutParams) {
     const {
-      sessionIds,
+      sessionPackageId,
       amount,
       mentorName,
       sessionType,
@@ -15,8 +15,6 @@ export class StripeService {
       cancelUrl,
     } = params;
 
-    // Using separate charges and transfers (not destination charges)
-    // Money stays with platform until session is completed
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
@@ -34,7 +32,7 @@ export class StripeService {
         },
       ],
       metadata: {
-        sessionIds: JSON.stringify(sessionIds),
+        sessionPackageId,
       },
       success_url: successUrl,
       cancel_url: cancelUrl,

@@ -1,18 +1,18 @@
 import { HttpError } from "../../../lib/formatters/httpError";
 import { MentorProfileService } from "../../out/mentorProfile.service";
-import { SessionService } from "../../out/session.service";
+import { SessionPackageService } from "../../out/sessionPackage.service";
 
 export class GetUserVibeCheckSessionService {
   static async getVibeCheckSession(userId: string, mentorSlug: string) {
-    const mentorUserId = await MentorProfileService.getBySlug(mentorSlug);
-    if (!mentorUserId) {
+    const mentorProfile = await MentorProfileService.getBySlug(mentorSlug);
+    if (!mentorProfile) {
       throw new HttpError(404, "Mentor profile not found");
     }
 
-    const session = await SessionService.getVibeCheckSession(
+    const sessionPackage = await SessionPackageService.getVibeCheckPackage(
       userId,
-      mentorUserId.userId,
+      mentorProfile.userId,
     );
-    return session;
+    return { sessionPackage };
   }
 }

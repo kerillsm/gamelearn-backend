@@ -10,7 +10,7 @@ import { GetAvailabilityRulesService } from "../../services/in/get-availability-
 import { AddAvailabilityExceptionService } from "../../services/in/add-availability-exception.service";
 import { GetAvailabilityExceptionsService } from "../../services/in/get-availability-exceptions.service";
 import { AvailabilityService } from "../../services/out/availability.service/availability.service";
-import { SessionType } from "@prisma/client";
+import { SessionPackageType } from "@prisma/client";
 import { HttpError } from "../../lib/formatters/httpError";
 import { GetAvailableMentorDates } from "../../services/in/get-available-mentor-dates.service";
 import { GetMentorAvailableTimes } from "../../services/in/get-mentor-available-times.service";
@@ -132,7 +132,7 @@ export class AvailabilityController {
       !year ||
       !month ||
       !sessionType ||
-      Object.keys(SessionType).indexOf(sessionType) === -1
+      Object.keys(SessionPackageType).indexOf(sessionType) === -1
     ) {
       throw new HttpError(
         400,
@@ -144,7 +144,7 @@ export class AvailabilityController {
       await GetAvailableMentorDates.getAvailableMentorDates({
         userId,
         mentorUserId,
-        sessionType: sessionType as SessionType,
+        sessionType: sessionType as SessionPackageType,
         year: parseInt(year, 10),
         month: parseInt(month, 10),
       });
@@ -166,7 +166,7 @@ export class AvailabilityController {
       !mentorUserId ||
       !date ||
       !sessionType ||
-      Object.keys(SessionType).indexOf(sessionType) === -1
+      Object.keys(SessionPackageType).indexOf(sessionType) === -1
     ) {
       throw new HttpError(
         400,
@@ -178,7 +178,7 @@ export class AvailabilityController {
       await GetMentorAvailableTimes.getMentorAvailableTimes({
         date,
         mentorUserId,
-        sessionType: sessionType as SessionType,
+        sessionType: sessionType as SessionPackageType,
         userId,
       });
 

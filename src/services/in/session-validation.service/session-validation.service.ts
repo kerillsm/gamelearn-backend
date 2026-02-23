@@ -1,7 +1,8 @@
-import { SessionType, User } from "@prisma/client";
+import { SessionPackageType, User } from "@prisma/client";
 import { DateTime, Interval } from "luxon";
 import { HttpError } from "../../../lib/formatters/httpError";
-import { SESSION_DURATION_BY_TYPE, SessionService } from "../../out/session.service";
+import { SESSION_DURATION_BY_TYPE } from "../../out/session.service";
+import { SessionPackageService } from "../../out/sessionPackage.service";
 import { MentorAvailabilityService } from "../mentor-availability.service";
 import { TimeSlotInput, ValidatedTimeSlot } from "./session-validation.interface";
 
@@ -9,7 +10,7 @@ export class SessionValidationService {
   static async validateTimeSlot(
     user: User,
     mentorUserId: string,
-    sessionType: SessionType,
+    sessionType: SessionPackageType,
     slot: TimeSlotInput,
   ): Promise<ValidatedTimeSlot> {
     if (!user.timezone) {
@@ -60,12 +61,12 @@ export class SessionValidationService {
   }
 
   static async validateVibeCheckEligibility(
-    userId: string,
-    mentorUserId: string,
+    applicantId: string,
+    mentorId: string,
   ): Promise<void> {
-    const existingVibeCheck = await SessionService.getVibeCheckSession(
-      userId,
-      mentorUserId,
+    const existingVibeCheck = await SessionPackageService.getVibeCheckPackage(
+      applicantId,
+      mentorId,
     );
     if (existingVibeCheck) {
       throw new HttpError(

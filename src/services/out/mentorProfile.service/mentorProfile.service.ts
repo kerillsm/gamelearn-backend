@@ -1,4 +1,4 @@
-import { MentorProfileStatus, Prisma, SessionStatus } from "@prisma/client";
+import { MentorProfileStatus, Prisma, SessionPackStatus } from "@prisma/client";
 import { prisma } from "../../../lib/orm/prisma";
 
 export class MentorProfileService {
@@ -105,10 +105,10 @@ export class MentorProfileService {
     return prisma.mentorProfile.findMany({
       where: {
         user: {
-          sessionsAsMentor: {
+          mentorSessionPacks: {
             some: {
-              userId,
-              status: SessionStatus.COMPLETED,
+              applicantId: userId,
+              status: SessionPackStatus.COMPLETED,
             },
           },
           testimonialsReceived: {

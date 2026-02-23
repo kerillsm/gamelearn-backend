@@ -1,5 +1,5 @@
-import { SessionStatus } from "@prisma/client";
-import { SessionService } from "../../out/session.service";
+import { SessionPackStatus } from "@prisma/client";
+import { SessionPackageService } from "../../out/sessionPackage.service";
 import { TestimonialService } from "../../out/testimonial.service";
 import { HttpError } from "../../../lib/formatters/httpError";
 
@@ -11,14 +11,14 @@ export class GetUserTestimonialBySlugService {
     );
 
     if (!testimonial) {
-      const haveSessionWithMentor =
-        await SessionService.getUserSessionsWithMentor(
+      const havePackageWithMentor =
+        await SessionPackageService.getApplicantPackagesWithMentorBySlug(
           userId,
           slug,
-          SessionStatus.COMPLETED,
+          SessionPackStatus.COMPLETED,
         );
 
-      if (!haveSessionWithMentor.length) {
+      if (!havePackageWithMentor.length) {
         throw new HttpError(
           403,
           "User has not completed a session with this mentor",

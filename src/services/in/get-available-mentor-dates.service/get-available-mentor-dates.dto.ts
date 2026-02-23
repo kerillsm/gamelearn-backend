@@ -1,9 +1,9 @@
-import { SessionType } from "@prisma/client";
+import { SessionPackageType } from "@prisma/client";
 
 export interface GetAvailableMentorDatesDTO {
   mentorUserId: string;
   userId: string;
-  sessionType: SessionType;
+  sessionType: SessionPackageType;
   year: number;
   month: number;
 }

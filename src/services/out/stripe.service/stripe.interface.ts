@@ -1,5 +1,5 @@
 export interface CreateCheckoutParams {
-  sessionIds: string[];
+  sessionPackageId: string;
   amount: number; // in cents
   mentorName: string;
   sessionType: string;

@@ -16,6 +16,7 @@ import { errorHandlerMiddleware } from "./lib/middleware/errorHandlerMiddleware"
 import { stripeWebhookMiddleware } from "./lib/middleware/stripeWebhookMiddleware";
 import { availabilityRoutes } from "./routes/availability.routes";
 import { sessionRoutes } from "./routes/session.routes";
+import { sessionPackageRoutes } from "./routes/sessionPackage.routes";
 import { paymentRoutes } from "./routes/payment.routes";
 import { referralRoutes } from "./routes/referral.routes";
 import { connectRoutes } from "./routes/connect.routes";
@@ -71,6 +72,11 @@ router.use(
   availabilityRoutes.allowedMethods(),
 );
 router.use("/sessions", sessionRoutes.routes(), sessionRoutes.allowedMethods());
+router.use(
+  "/session-packages",
+  sessionPackageRoutes.routes(),
+  sessionPackageRoutes.allowedMethods(),
+);
 router.use("/payment", paymentRoutes.routes(), paymentRoutes.allowedMethods());
 router.use(
   "/referral",

@@ -45,16 +45,12 @@ export async function fetchAvailabilityDataForUserMonth({
       gte: fetchStartDate,
       lte: fetchEndDate,
     }),
-    SessionService.getMentorSessions(mentorUserId, {
-      scheduledAt: {
-        gte: userMonthStart.toUTC().toJSDate(),
-        lte: userMonthEnd.toUTC().toJSDate(),
-      },
-      OR: [
-        { status: SessionStatus.APPROVED },
-        { status: SessionStatus.COMPLETED },
-      ],
-    }),
+    SessionService.getSessionsByMentorForDateRange(
+      mentorUserId,
+      userMonthStart.toUTC().toJSDate(),
+      userMonthEnd.toUTC().toJSDate(),
+      [SessionStatus.APPROVED, SessionStatus.COMPLETED],
+    ),
   ]);
 
   return {

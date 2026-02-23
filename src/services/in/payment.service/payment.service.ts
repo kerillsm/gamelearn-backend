@@ -1,49 +1,62 @@
-import { SessionStatus } from "@prisma/client";
+import { SessionPackStatus } from "@prisma/client";
+import { SessionPackageService } from "../../out/sessionPackage.service";
 import { SessionService } from "../../out/session.service";
 import { RecordReferralEarningService } from "../record-referral-earning.service";
 
 export class PaymentService {
   static async handleCheckoutCompleted(
-    stripeSessionId: string,
+    stripeSessionPackageId: string,
     paymentIntentId: string,
   ) {
-    const sessions = await SessionService.getByStripeSessionId(stripeSessionId);
-    if (sessions.length === 0) {
-      console.warn(`No sessions found for stripeSessionId: ${stripeSessionId}`);
+    const sessionPackage =
+      await SessionPackageService.getByStripeSessionPackageId(stripeSessionPackageId);
+    if (!sessionPackage) {
+      console.warn(
+        `No session package found for stripeSessionPackageId: ${stripeSessionPackageId}`,
+      );
       return;
     }
 
-    // Update status and store payment intent ID for potential refunds
-    await SessionService.updateByStripeSessionId(stripeSessionId, {
-      status: SessionStatus.PAYED,
-      stripePaymentIntentId: paymentIntentId,
-    });
+    await SessionPackageService.updateByStripeSessionPackageId(
+      stripeSessionPackageId,
+      {
+        status: SessionPackStatus.PAYED,
+        stripePaymentIntentId: paymentIntentId,
+      },
+    );
 
-    // Record referral earnings for each session
-    for (const session of sessions) {
-      try {
-        await RecordReferralEarningService.execute(session.id);
-      } catch (error) {
-        console.error(`Failed to record referral earning for session ${session.id}:`, error);
-      }
+    try {
+      await RecordReferralEarningService.execute(sessionPackage.id);
+    } catch (error) {
+      console.error(
+        `Failed to record referral earning for package ${sessionPackage.id}:`,
+        error,
+      );
+    }
+
+    for (const session of sessionPackage.sessions) {
+      await SessionService.updateSession(session.id, { status: "PAYED" });
     }
 
     console.log(
-      `Payment completed for ${sessions.length} session(s), stripeSessionId: ${stripeSessionId}`,
+      `Payment completed for package ${sessionPackage.id}, stripeSessionPackageId: ${stripeSessionPackageId}`,
     );
   }
 
-  static async handleCheckoutExpired(stripeSessionId: string) {
-    const sessions = await SessionService.getByStripeSessionId(stripeSessionId);
-    if (sessions.length === 0) {
-      console.warn(`No sessions found for stripeSessionId: ${stripeSessionId}`);
+  static async handleCheckoutExpired(stripeSessionPackageId: string) {
+    const sessionPackage =
+      await SessionPackageService.getByStripeSessionPackageId(stripeSessionPackageId);
+    if (!sessionPackage) {
+      console.warn(
+        `No session package found for stripeSessionPackageId: ${stripeSessionPackageId}`,
+      );
       return;
     }
 
-    await SessionService.deleteByStripeSessionId(stripeSessionId);
+    await SessionPackageService.deleteByStripeSessionPackageId(stripeSessionPackageId);
 
     console.log(
-      `Payment expired/failed - deleted ${sessions.length} session(s), stripeSessionId: ${stripeSessionId}`,
+      `Payment expired - deleted package ${sessionPackage.id}, stripeSessionPackageId: ${stripeSessionPackageId}`,
     );
   }
 }

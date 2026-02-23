@@ -11,7 +11,7 @@ import {
   AvailabilityRule,
   ExceptionType,
   Session,
-  SessionType,
+  SessionPackageType,
 } from "@prisma/client";
 import { SESSION_DURATION_BY_TYPE } from "../../../out/session.service";
 
@@ -28,7 +28,7 @@ export function getAvailableIntervalsForDate({
   exceptions: AvailabilityException[];
   bookings: Session[];
   userTimezone: string;
-  sessionType: SessionType;
+  sessionType: SessionPackageType;
 }) {
   let intervals: Interval<true>[] = [];
 
