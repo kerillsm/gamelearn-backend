@@ -9,6 +9,7 @@ import { ListSessionPackagesService } from "../../services/in/list-session-packa
 import { CancelPendingSessionPackageService } from "../../services/in/cancel-pending-session-package.service";
 import { ApproveSessionPackageService } from "../../services/in/approve-session-package.service";
 import { RejectSessionPackageService } from "../../services/in/reject-session-package.service";
+import { CancelSessionPackageService } from "../../services/in/cancel-session-package.service/cancel-session-package.service";
 
 export class SessionPackageController {
   @AuthRequired()
@@ -148,6 +149,27 @@ export class SessionPackageController {
     const { reason } = ctx.request.body as { reason?: string };
 
     const sessionPackage = await RejectSessionPackageService.execute(
+      sessionPackageId,
+      user.id,
+      reason,
+    );
+
+    ctx.status = 200;
+    ctx.body = { sessionPackage };
+  }
+
+  @AuthRequired()
+  @Validate(
+    Joi.object({
+      reason: Joi.string().optional(),
+    }),
+  )
+  static async cancelSessionPackage(ctx: Context) {
+    const user = ctx.state.user;
+    const { sessionPackageId } = ctx.params as { sessionPackageId: string };
+    const { reason } = ctx.request.body as { reason?: string };
+
+    const sessionPackage = await CancelSessionPackageService.execute(
       sessionPackageId,
       user.id,
       reason,

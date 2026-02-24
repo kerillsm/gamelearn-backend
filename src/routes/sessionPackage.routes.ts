@@ -4,8 +4,16 @@ import { SessionPackageController } from "../controllers/sessionPackage.controll
 
 const router = new Router();
 
-router.get("/my-packages", authMiddleware, SessionPackageController.getMySessionPackages);
-router.get("/mentor-packages", authMiddleware, SessionPackageController.getMentorSessionPackages);
+router.get(
+  "/my-packages",
+  authMiddleware,
+  SessionPackageController.getMySessionPackages,
+);
+router.get(
+  "/mentor-packages",
+  authMiddleware,
+  SessionPackageController.getMentorSessionPackages,
+);
 
 router.post("/", authMiddleware, SessionPackageController.createSessionPackage);
 
@@ -31,6 +39,12 @@ router.post(
   "/:sessionPackageId/reject",
   authMiddleware,
   SessionPackageController.rejectSessionPackage,
+);
+
+router.post(
+  "/:sessionPackageId/cancel",
+  authMiddleware,
+  SessionPackageController.cancelSessionPackage,
 );
 
 export { router as sessionPackageRoutes };

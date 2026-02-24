@@ -151,6 +151,8 @@ enum SessionPackStatus {
   REJECTED
   COMPLETED
   CANCELED
+  CANCELED_BY_APPLICANT
+  CANCELED_BY_MENTOR
 }
 
 model SessionPackage {
@@ -165,6 +167,10 @@ model SessionPackage {
   stripePaymentIntentId   String?
   venue                   String?
   rejectionReason         String?
+  stripeRefundId          String?
+  refundAmount            Float?
+  refundedAt              DateTime? @db.Timestamptz
+  cancellationReason      String?
 
   createdAt DateTime @db.Timestamptz(6) @default(now())
   updatedAt DateTime @db.Timestamptz(6) @updatedAt
