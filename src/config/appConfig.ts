@@ -28,4 +28,9 @@ export const appConfig = {
   sentry: {
     dsn: process.env.SENTRY_DSN ?? undefined,
   },
+  resend: {
+    apiKey: getSafeEnv("RESEND_API_KEY"),
+    fromEmail: getSafeEnv("RESEND_EMAIL_FROM"),
+    adminEmail: getSafeEnv("RESEND_ADMIN_EMAIL"),
+  },
 };

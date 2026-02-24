@@ -40,6 +40,7 @@
     "luxon": "^3.7.2",
     "nanoid": "3",
     "passport-discord": "^0.1.4",
+    "resend": "^6.9.2",
     "rrule": "^2.8.1",
     "stripe": "^20.3.0"
   }

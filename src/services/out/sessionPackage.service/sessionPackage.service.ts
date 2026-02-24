@@ -69,7 +69,11 @@ export class SessionPackageService {
   static getByStripeSessionPackageId(stripeSessionPackageId: string) {
     return prisma.sessionPackage.findUnique({
       where: { stripeSessionPackageId },
-      include: { sessions: true },
+      include: {
+        sessions: { orderBy: { scheduledAt: "asc" } },
+        mentor: true,
+        applicant: true,
+      },
     });
   }
 

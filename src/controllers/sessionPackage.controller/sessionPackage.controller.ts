@@ -105,7 +105,9 @@ export class SessionPackageController {
   )
   static async cancelPendingSessionPackage(ctx: Context) {
     const user = ctx.state.user;
-    const { sessionPackageId } = ctx.request.body as { sessionPackageId: string };
+    const { sessionPackageId } = ctx.request.body as {
+      sessionPackageId: string;
+    };
 
     await CancelPendingSessionPackageService.execute(sessionPackageId, user.id);
 

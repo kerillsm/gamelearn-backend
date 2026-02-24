@@ -59,7 +59,6 @@ export class CreateSessionPackageService {
 
     const mentorCompletedSessions =
       await SessionService.countCompletedSessionsByMentor(mentorProfile.userId);
-
     const clientReferrerId = await ReferralService.getReferrerUserId(user.id);
     const mentorReferrerId = await ReferralService.getReferrerUserId(
       mentorProfile.userId,
@@ -85,6 +84,13 @@ export class CreateSessionPackageService {
 
     const sessionsCount = PricingService.getSessionsCount(data.sessionType);
     const duration = SESSION_PACKAGE_DURATION_BY_TYPE[data.sessionType];
+
+    if (data.sessions.length !== sessionsCount) {
+      throw new HttpError(
+        400,
+        `Invalid number of sessions. Expected ${sessionsCount} for session type ${data.sessionType}.`,
+      );
+    }
 
     let sessionPackage = await SessionPackageService.create({
       type: data.sessionType,
