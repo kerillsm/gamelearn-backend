@@ -10,6 +10,4 @@ router.post(
   SessionController.completeSession,
 );
 
-router.post("/:sessionId/cancel", authMiddleware, SessionController.cancelSession);
-
 export { router as sessionRoutes };
