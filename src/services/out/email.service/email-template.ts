@@ -28,16 +28,18 @@ export const EMAIL_BASE_TEMPLATE = (
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
   </head>
-  <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
-    <div style="background: ${gradient}; padding: 20px; border-radius: 10px 10px 0 0; text-align: center;">
-      <span style="font-size: 32px; vertical-align: middle;">🎮</span>
-      <span style="margin: 0; color: white; font-size: 24px; font-weight: 600; vertical-align: middle; margin-left: 10px;">GameLearn</span>
-    </div>
-    
-    ${content}
-    
-    <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
-      <p>© ${new Date().getFullYear()} GameLearn. Всі права захищені.</p>
+  <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f5f5f5;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: ${gradient}; padding: 20px; border-radius: 10px 10px 0 0; text-align: center;">
+        <span style="font-size: 32px; vertical-align: middle;">🎮</span>
+        <span style="margin: 0; color: white; font-size: 24px; font-weight: 600; vertical-align: middle; margin-left: 10px;">GameLearn</span>
+      </div>
+      
+      ${content}
+      
+      <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
+        <p>© ${new Date().getFullYear()} GameLearn. Всі права захищені.</p>
+      </div>
     </div>
   </body>
 </html>
