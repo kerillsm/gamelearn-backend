@@ -34,6 +34,7 @@ export class StripeService {
       metadata: {
         sessionPackageId,
       },
+      expires_at: Math.floor(Date.now() / 1000) + 60 * 60, // 1 hour expiration
       success_url: successUrl,
       cancel_url: cancelUrl,
     });
