@@ -14,14 +14,12 @@ export class EmailService {
     }
 
     try {
-      const response = await resend.emails.send({
+      await resend.emails.send({
         from: appConfig.resend.fromEmail,
         to: [emailTemplate.to],
         subject: emailTemplate.subject,
         html: emailTemplate.html,
       });
-
-      console.log(`Email sent to ${emailTemplate.to}:`, response);
     } catch (error) {
       console.error(`Failed to send email to ${emailTemplate.to}:`, error);
       throw error;

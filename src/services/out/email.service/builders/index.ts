@@ -3,6 +3,7 @@ export { buildApplicantSessionCheckoutExpiredEmail } from "./session-checkout-ex
 export { buildSessionPackageApprovalEmail } from "./session-package-approval.builder";
 export { buildSessionPackageCompletedEmail } from "./session-package-completed.builder";
 export { buildSessionPackageRejectionEmail } from "./session-package-rejection.builder";
+export { buildSessionPackageAutoRejectionMentorEmail } from "./session-package-auto-rejection-mentor.builder";
 export {
   buildApplicantCanceledSessionPackageEmail,
   buildMentorCanceledSessionPackageEmail,

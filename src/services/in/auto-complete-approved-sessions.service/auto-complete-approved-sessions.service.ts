@@ -15,6 +15,7 @@ type AutoCompleteResult = {
 
 export class AutoCompleteApprovedSessionsService {
   static async execute(): Promise<AutoCompleteResult> {
+    console.log("Running auto-complete approved sessions service...");
     const now = new Date();
 
     const approvedSessions = await SessionService.getByStatusBefore(
@@ -108,6 +109,10 @@ export class AutoCompleteApprovedSessionsService {
         );
       }
     }
+
+    console.log(
+      `Checked ${approvedSessions.length} approved sessions, completed ${updatedSessions.count} sessions and ${completedPackagesCount} packages.`,
+    );
 
     return {
       checkedSessionsCount: approvedSessions.length,

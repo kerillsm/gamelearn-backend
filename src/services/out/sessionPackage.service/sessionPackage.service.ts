@@ -35,6 +35,13 @@ export class SessionPackageService {
     });
   }
 
+  static getAll(
+    where: Prisma.SessionPackageWhereInput,
+    include: Prisma.SessionPackageInclude,
+  ) {
+    return prisma.sessionPackage.findMany({ where, include });
+  }
+
   static async listPackages(
     filter: { applicantId?: string; mentorId?: string },
     options: {

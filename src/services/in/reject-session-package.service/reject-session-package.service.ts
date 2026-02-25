@@ -8,6 +8,7 @@ import { StripeService } from "../../out/stripe.service";
 import {
   EmailService,
   buildSessionPackageRejectionEmail,
+  buildSessionPackageAutoRejectionMentorEmail,
 } from "../../out/email.service";
 
 export class RejectSessionPackageService {
@@ -15,6 +16,7 @@ export class RejectSessionPackageService {
     sessionPackageId: string,
     mentorUserId: string,
     reason?: string,
+    notifyMentor?: boolean,
   ) {
     const sessionPackage =
       await SessionPackageService.getById(sessionPackageId);
@@ -103,6 +105,27 @@ export class RejectSessionPackageService {
       } catch (error) {
         console.error("Failed to send rejection email:", error);
         // Don't throw - email failure should not break the rejection flow
+      }
+
+      // Send notification email to the mentor if requested (for auto-rejection)
+      if (notifyMentor) {
+        try {
+          await EmailService.sendEmail(
+            buildSessionPackageAutoRejectionMentorEmail({
+              applicant,
+              mentor,
+              sessions: updatedPackage.sessions,
+              sessionPackage: updatedPackage,
+              reason: reason?.trim(),
+            }),
+          );
+          console.log(
+            `Auto-rejection notification email sent to mentor ${mentor.email}`,
+          );
+        } catch (error) {
+          console.error("Failed to send mentor notification email:", error);
+          // Don't throw - email failure should not break the rejection flow
+        }
       }
     }
 
