@@ -30,12 +30,21 @@ export class SessionPackageController {
   @AuthRequired()
   static async getMentorSessionPackages(ctx: Context) {
     const user = ctx.state.user;
-    const { page, status } = ctx.query as { page?: string; status?: string };
+    const { page, status, year, monthIndex, all } = ctx.query as {
+      page?: string;
+      status?: string;
+      year?: string;
+      monthIndex?: string;
+      all?: string;
+    };
 
     const result = await ListSessionPackagesService.listMentorSessionPackages(
       user.id,
       page ? parseInt(page, 10) : 1,
       status,
+      year ? parseInt(year, 10) : undefined,
+      monthIndex ? parseInt(monthIndex, 10) : undefined,
+      all === "true",
     );
 
     ctx.status = 200;

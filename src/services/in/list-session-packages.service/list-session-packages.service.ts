@@ -20,12 +20,26 @@ export class ListSessionPackagesService {
     mentorId: string,
     page = 1,
     status?: string,
+    year?: number,
+    monthIndex?: number,
+    all = false,
   ) {
     const result = await SessionPackageService.listPackages(
       { mentorId },
-      { page, pageSize: PAGE_SIZE, status: this.parseStatus(status) },
+      {
+        page,
+        pageSize: PAGE_SIZE,
+        status: this.parseStatus(status),
+        year,
+        monthIndex,
+        all,
+      },
     );
-    return { ...result, page, pageSize: PAGE_SIZE };
+    return {
+      ...result,
+      page,
+      pageSize: all ? result.total || PAGE_SIZE : PAGE_SIZE,
+    };
   }
 
   private static parseStatus(status?: string): SessionPackStatus | undefined {

@@ -37,13 +37,49 @@ export class SessionPackageService {
 
   static async listPackages(
     filter: { applicantId?: string; mentorId?: string },
-    options: { page: number; pageSize: number; status?: SessionPackStatus },
+    options: {
+      page: number;
+      pageSize: number;
+      status?: SessionPackStatus;
+      year?: number;
+      monthIndex?: number;
+      all?: boolean;
+    },
   ) {
-    const { page, pageSize, status } = options;
+    const { page, pageSize, status, year, monthIndex, all } = options;
+    const hasMonthFilter =
+      Number.isInteger(year) &&
+      Number.isInteger(monthIndex) &&
+      (monthIndex as number) >= 0 &&
+      (monthIndex as number) <= 11;
+
+    const monthStart = hasMonthFilter
+      ? new Date(
+          Date.UTC(year as number, (monthIndex as number) - 1, 1, 0, 0, 0, 0),
+        )
+      : undefined;
+    const monthEnd = hasMonthFilter
+      ? new Date(
+          Date.UTC(year as number, (monthIndex as number) + 2, 1, 0, 0, 0, 0),
+        )
+      : undefined;
+
     const where: Prisma.SessionPackageWhereInput = {
       ...(filter.applicantId && { applicantId: filter.applicantId }),
       ...(filter.mentorId && { mentorId: filter.mentorId }),
       ...(status && { status }),
+      ...(hasMonthFilter &&
+        monthStart &&
+        monthEnd && {
+          sessions: {
+            some: {
+              scheduledAt: {
+                gte: monthStart,
+                lt: monthEnd,
+              },
+            },
+          },
+        }),
     };
 
     const userSelect = { id: true, name: true, picture: true, slug: true };
@@ -57,8 +93,7 @@ export class SessionPackageService {
           sessions: { orderBy: { scheduledAt: "asc" } },
         },
         orderBy: { createdAt: "desc" },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
+        ...(all ? {} : { skip: (page - 1) * pageSize, take: pageSize }),
       }),
       prisma.sessionPackage.count({ where }),
     ]);
