@@ -7,6 +7,7 @@ import cors from "@koa/cors";
 import koaBody from "koa-body";
 import fs from "fs";
 import https from "https";
+import cron from "node-cron";
 import { appConfig } from "./config/appConfig";
 import { authRoutes } from "./routes/auth.routes";
 import { userRoutes } from "./routes/user.routes";
@@ -15,7 +16,6 @@ import { mentorProfileRoutes } from "./routes/mentorProfile.routes";
 import { errorHandlerMiddleware } from "./lib/middleware/errorHandlerMiddleware";
 import { stripeWebhookMiddleware } from "./lib/middleware/stripeWebhookMiddleware";
 import { availabilityRoutes } from "./routes/availability.routes";
-import { sessionRoutes } from "./routes/session.routes";
 import { sessionPackageRoutes } from "./routes/sessionPackage.routes";
 import { paymentRoutes } from "./routes/payment.routes";
 import { referralRoutes } from "./routes/referral.routes";
@@ -24,6 +24,7 @@ import { mentorApplicationRoutes } from "./routes/mentorApplication.routes";
 import { testimonialRoutes } from "./routes/testimonial.routes";
 import { adminMentorProfileRoutes } from "./routes/adminMentorProfile.routes";
 import { adminMentorApplicationRoutes } from "./routes/adminMentorApplication.routes";
+import { AutoCompleteApprovedSessionsService } from "./services/in/auto-complete-approved-sessions.service";
 
 // Initialize Koa app
 const app = new Koa();
@@ -71,7 +72,6 @@ router.use(
   availabilityRoutes.routes(),
   availabilityRoutes.allowedMethods(),
 );
-router.use("/sessions", sessionRoutes.routes(), sessionRoutes.allowedMethods());
 router.use(
   "/session-packages",
   sessionPackageRoutes.routes(),
@@ -104,7 +104,10 @@ router.use(
   adminMentorApplicationRoutes.routes(),
   adminMentorApplicationRoutes.allowedMethods(),
 );
+
 app.use(router.routes()).use(router.allowedMethods());
+// every hour
+cron.schedule("0 * * * *", AutoCompleteApprovedSessionsService.execute);
 
 // Start server
 if (appConfig.appEnv === "development") {

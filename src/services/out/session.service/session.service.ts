@@ -6,6 +6,21 @@ export class SessionService {
     return prisma.session.create({ data });
   }
 
+  static getByStatusBefore(status: SessionStatus, date: Date) {
+    return prisma.session.findMany({
+      where: {
+        status,
+        scheduledAt: { lt: date },
+      },
+      select: {
+        id: true,
+        sessionPackageId: true,
+        scheduledAt: true,
+        duration: true,
+      },
+    });
+  }
+
   static getById(sessionId: string) {
     return prisma.session.findUnique({
       where: { id: sessionId },
@@ -18,8 +33,12 @@ export class SessionService {
       include: {
         sessionPackage: {
           include: {
-            mentor: { select: { id: true, name: true, picture: true, slug: true } },
-            applicant: { select: { id: true, name: true, picture: true, slug: true } },
+            mentor: {
+              select: { id: true, name: true, picture: true, slug: true },
+            },
+            applicant: {
+              select: { id: true, name: true, picture: true, slug: true },
+            },
           },
         },
       },
@@ -31,6 +50,10 @@ export class SessionService {
       where: { id: sessionId },
       data,
     });
+  }
+
+  static updateMany(args: Prisma.SessionUpdateManyArgs) {
+    return prisma.session.updateMany(args);
   }
 
   static deleteById(sessionId: string) {
@@ -74,7 +97,10 @@ export class SessionService {
     mentorId: string,
     start: Date,
     end: Date,
-    statuses: SessionStatus[] = [SessionStatus.APPROVED, SessionStatus.COMPLETED],
+    statuses: SessionStatus[] = [
+      SessionStatus.APPROVED,
+      SessionStatus.COMPLETED,
+    ],
   ) {
     return prisma.session.findMany({
       where: {
