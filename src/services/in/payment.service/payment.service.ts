@@ -4,6 +4,7 @@ import { SessionService } from "../../out/session.service";
 import {
   EmailService,
   buildApplicantBookingConfirmationEmail,
+  buildApplicantSessionCheckoutExpiredEmail,
 } from "../../out/email.service";
 
 export class PaymentService {
@@ -69,6 +70,22 @@ export class PaymentService {
         `No session package found for stripeSessionPackageId: ${stripeSessionPackageId}`,
       );
       return;
+    }
+
+    try {
+      await EmailService.sendEmail(
+        buildApplicantSessionCheckoutExpiredEmail({
+          applicant: sessionPackage.applicant,
+          mentor: sessionPackage.mentor,
+          sessions: sessionPackage.sessions,
+          sessionPackage,
+        }),
+      );
+      console.log(
+        `Checkout expiration email sent to ${sessionPackage.applicant.email}`,
+      );
+    } catch (error) {
+      console.error("Failed to send checkout expiration email:", error);
     }
 
     await SessionPackageService.deleteByStripeSessionPackageId(
