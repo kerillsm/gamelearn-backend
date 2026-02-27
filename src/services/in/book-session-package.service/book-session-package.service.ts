@@ -92,6 +92,34 @@ export class BookSessionPackageService {
       );
     }
 
+    const validatedSlots = await Promise.all(
+      data.sessions.map((slot) =>
+        SessionValidationService.validateTimeSlot(
+          user,
+          mentorProfile.userId,
+          data.sessionType,
+          slot,
+        ),
+      ),
+    );
+
+    const firstSessionStartAt = validatedSlots.reduce(
+      (min, slot) =>
+        slot.scheduledAt < min ? slot.scheduledAt : min,
+      validatedSlots[0].scheduledAt,
+    );
+    const lastSessionEndAt = validatedSlots.reduce(
+      (max, slot) => {
+        const endAt = new Date(
+          slot.scheduledAt.getTime() + duration * 60 * 1000,
+        );
+        return endAt > max ? endAt : max;
+      },
+      new Date(
+        validatedSlots[0].scheduledAt.getTime() + duration * 60 * 1000,
+      ),
+    );
+
     let sessionPackage = await SessionPackageService.create({
       type: data.sessionType,
       status: isFreeSession
@@ -101,25 +129,20 @@ export class BookSessionPackageService {
       price: pricing.totalPrice,
       mentor: { connect: { id: mentorProfile.userId } },
       applicant: { connect: { id: user.id } },
+      firstSessionStartAt,
+      lastSessionEndAt,
     });
 
     try {
       await Promise.all(
-        data.sessions.map(async (slot) => {
-          const validatedSlot = await SessionValidationService.validateTimeSlot(
-            user,
-            mentorProfile.userId,
-            data.sessionType,
-            slot,
-          );
-
-          return SessionService.createSession({
+        validatedSlots.map((validatedSlot) =>
+          SessionService.createSession({
             sessionPackage: { connect: { id: sessionPackage.id } },
             scheduledAt: validatedSlot.scheduledAt,
             duration,
             status: isFreeSession ? SessionStatus.PAYED : SessionStatus.PENDING,
-          });
-        }),
+          }),
+        ),
       );
     } catch (error) {
       await SessionPackageService.deleteById(sessionPackage.id);

@@ -170,6 +170,8 @@ model SessionPackage {
   refundAmount            Float?
   refundedAt              DateTime? @db.Timestamptz
   cancellationReason      String?
+  firstSessionStartAt     DateTime  @db.Timestamptz
+  lastSessionEndAt        DateTime  @db.Timestamptz
 
   createdAt DateTime @db.Timestamptz(6) @default(now())
   updatedAt DateTime @db.Timestamptz(6) @updatedAt
