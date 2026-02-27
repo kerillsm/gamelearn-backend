@@ -10,8 +10,8 @@ const REFERRER_BONUS_RATE = 0.05; // Flat 5% reduction from fee
 // Service fee tiers based on mentor's completed sessions
 const SERVICE_FEE_TIERS = [
   { minSessions: 150, fee: 0.25 }, // 25% after 150 sessions
-  { minSessions: 50, fee: 0.28 },  // 28% after 50 sessions
-  { minSessions: 0, fee: 0.33 },   // 33% default
+  { minSessions: 50, fee: 0.28 }, // 28% after 50 sessions
+  { minSessions: 0, fee: 0.33 }, // 33% default
 ];
 
 export class PricingService {
@@ -34,7 +34,8 @@ export class PricingService {
         sessionPrice = mentorPrice;
         break;
       case SessionPackageType.SESSIONS_PACK:
-        totalPrice = mentorPrice * SESSIONS_IN_PACK_COUNT * (1 - SESSIONS_PACK_DISCOUNT);
+        totalPrice =
+          mentorPrice * SESSIONS_IN_PACK_COUNT * (1 - SESSIONS_PACK_DISCOUNT);
         sessionPrice = totalPrice / SESSIONS_IN_PACK_COUNT;
         break;
       default:
@@ -78,8 +79,6 @@ export class PricingService {
     const totalReferralBonuses = clientReferralBonus + mentorReferralBonus;
     const platformFeeAmount = serviceFeeAmount;
     const mentorEarnings = totalPrice - serviceFeeAmount - totalReferralBonuses;
-    // Application fee = what platform keeps (fee + bonuses to pay out)
-    const applicationFee = platformFeeAmount + totalReferralBonuses;
 
     return {
       totalPrice,
@@ -90,7 +89,6 @@ export class PricingService {
       clientReferralBonus,
       mentorReferralBonus,
       referralDiscount,
-      applicationFee,
     };
   }
 
@@ -108,6 +106,8 @@ export class PricingService {
   }
 
   static getSessionsCount(sessionType: SessionPackageType): number {
-    return sessionType === SessionPackageType.SESSIONS_PACK ? SESSIONS_IN_PACK_COUNT : 1;
+    return sessionType === SessionPackageType.SESSIONS_PACK
+      ? SESSIONS_IN_PACK_COUNT
+      : 1;
   }
 }

@@ -1,7 +1,7 @@
 import { HttpError } from "../../../lib/formatters/httpError";
 import { MentorProfileService } from "../../out/mentorProfile.service";
 import { UserService } from "../../out/user.service";
-import { CreateSessionPackageDTO } from "./create-session-package.dto";
+import { BookSessionPackageDTO } from "./book-session-package.dto";
 import {
   SessionPackageService,
   SESSION_PACKAGE_DURATION_BY_TYPE,
@@ -19,13 +19,13 @@ import { StripeService } from "../../out/stripe.service";
 import { appConfig } from "../../../config/appConfig";
 import { PricingService } from "../pricing.service";
 import { SessionValidationService } from "../session-validation.service";
-import { CreateSessionPackageResult } from "./create-session-package.interface";
+import { BookSessionPackageResult } from "./book-session-package.interface";
 import { ReferralService } from "../../out/referral.service";
 
-export class CreateSessionPackageService {
-  static async create(
-    data: CreateSessionPackageDTO,
-  ): Promise<CreateSessionPackageResult> {
+export class BookSessionPackageService {
+  static async execute(
+    data: BookSessionPackageDTO,
+  ): Promise<BookSessionPackageResult> {
     const user = await UserService.getById(data.userId);
     if (!user || !user.timezone) {
       throw new HttpError(400, "User not found or timezone not set");
@@ -117,10 +117,6 @@ export class CreateSessionPackageService {
             sessionPackage: { connect: { id: sessionPackage.id } },
             scheduledAt: validatedSlot.scheduledAt,
             duration,
-            serviceFee: pricing.serviceFee / sessionsCount,
-            mentorEarnings: pricing.mentorEarnings / sessionsCount,
-            platformFee: pricing.platformFee / sessionsCount,
-            referralDiscount: pricing.referralDiscount / sessionsCount,
             status: isFreeSession ? SessionStatus.PAYED : SessionStatus.PENDING,
           });
         }),
@@ -131,7 +127,6 @@ export class CreateSessionPackageService {
     }
 
     if (isFreeSession) {
-      // sessionPackage with sessions
       sessionPackage = (await SessionPackageService.getById(
         sessionPackage.id,
       )) as SessionPackage & { sessions: Session[] };
@@ -141,23 +136,49 @@ export class CreateSessionPackageService {
       return { sessionPackage, checkoutUrl: null };
     }
 
+    // Compute cent amounts for Stripe metadata
+    const totalAmountCents = Math.round(pricing.totalPrice * 100);
+    const platformCommissionPct = Math.round(pricing.serviceFee * 100); // e.g. 33 for 33%
+    const platformCommissionCents = Math.round(pricing.platformFee * 100);
+    const mentorPayoutCents = Math.round(pricing.mentorEarnings * 100);
+    const clientReferralBonusCents = Math.round(
+      pricing.clientReferralBonus * 100,
+    );
+    const mentorReferralBonusCents = Math.round(
+      pricing.mentorReferralBonus * 100,
+    );
+
+    // Get full Referral records for PaymentReferral linking
+    const clientReferral = clientReferrerId
+      ? await ReferralService.getReferralByReferredUserId(user.id)
+      : null;
+    const mentorReferral = mentorReferrerId
+      ? await ReferralService.getReferralByReferredUserId(mentorProfile.userId)
+      : null;
+
     const checkoutSession = await StripeService.createCheckoutSession({
       sessionPackageId: sessionPackage.id,
-      amount: Math.round(pricing.totalPrice * 100),
+      amount: totalAmountCents,
       mentorName: mentorProfile.name,
       sessionType: data.sessionType,
       successUrl: `${appConfig.frontendUrl}/booking/success?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${appConfig.frontendUrl}/booking/canceled?session_package_id=${sessionPackage.id}`,
+      mentorUserId: mentorProfile.userId,
+      platformCommissionPct,
+      platformCommissionCents,
+      mentorPayoutCents,
+      clientReferralBonusCents,
+      mentorReferralBonusCents,
+      clientReferralId: clientReferral?.id ?? null,
+      mentorReferralId: mentorReferral?.id ?? null,
+      clientReferrerUserId: clientReferrerId,
+      mentorReferrerUserId: mentorReferrerId,
     });
 
-    await SessionPackageService.updateStripeSessionPackageId(
+    sessionPackage = await SessionPackageService.updateStripeSessionPackageId(
       sessionPackage.id,
       checkoutSession.id,
     );
-
-    sessionPackage = (await SessionPackageService.getById(
-      sessionPackage.id,
-    )) as SessionPackage & { sessions: Session[] };
 
     return {
       sessionPackage,

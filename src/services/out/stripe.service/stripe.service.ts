@@ -13,6 +13,16 @@ export class StripeService {
       sessionType,
       successUrl,
       cancelUrl,
+      mentorUserId,
+      platformCommissionPct,
+      platformCommissionCents,
+      mentorPayoutCents,
+      clientReferralBonusCents,
+      mentorReferralBonusCents,
+      clientReferralId,
+      mentorReferralId,
+      clientReferrerUserId,
+      mentorReferrerUserId,
     } = params;
 
     const checkoutSession = await stripe.checkout.sessions.create({
@@ -33,6 +43,16 @@ export class StripeService {
       ],
       metadata: {
         sessionPackageId,
+        mentorUserId,
+        platformCommissionPct: String(platformCommissionPct),
+        platformCommissionCents: String(platformCommissionCents),
+        mentorPayoutCents: String(mentorPayoutCents),
+        clientReferralBonusCents: String(clientReferralBonusCents),
+        mentorReferralBonusCents: String(mentorReferralBonusCents),
+        ...(clientReferralId && { clientReferralId }),
+        ...(mentorReferralId && { mentorReferralId }),
+        ...(clientReferrerUserId && { clientReferrerUserId }),
+        ...(mentorReferrerUserId && { mentorReferrerUserId }),
       },
       expires_at: Math.floor(Date.now() / 1000) + 60 * 60, // 1 hour expiration
       success_url: successUrl,

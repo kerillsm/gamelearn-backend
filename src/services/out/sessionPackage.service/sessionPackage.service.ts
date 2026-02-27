@@ -133,6 +133,7 @@ export class SessionPackageService {
     return prisma.sessionPackage.update({
       where: { id },
       data: { stripeSessionPackageId },
+      include: { sessions: true, mentor: true, applicant: true },
     });
   }
 

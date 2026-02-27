@@ -40,13 +40,4 @@ export class ReferralController {
     ctx.status = 200;
     ctx.body = result;
   }
-
-  @AuthRequired()
-  static async getMyEarnings(ctx: Context) {
-    const user = ctx.state.user!;
-    const earnings = await ReferralService.getEarningsByUserId(user.id);
-
-    ctx.status = 200;
-    ctx.body = { earnings };
-  }
 }

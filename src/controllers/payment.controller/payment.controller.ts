@@ -1,6 +1,7 @@
 import { Context } from "koa";
 import { StripeService } from "../../services/out/stripe.service";
-import { PaymentService } from "../../services/in/payment.service";
+import { HandleCheckoutCompletedService } from "../../services/in/handle-checkout-completed.service";
+import { HandleCheckoutExpiredService } from "../../services/in/handle-checkout-expired.service";
 import { HandleConnectAccountUpdatedService } from "../../services/in/handle-connect-account-updated.service";
 import { HttpError } from "../../lib/formatters/httpError";
 
@@ -30,17 +31,14 @@ export class PaymentController {
       case "checkout.session.completed": {
         if (StripeService.isCheckoutSessionEvent(event)) {
           const session = event.data.object;
-          const paymentIntentId = typeof session.payment_intent === "string" 
-            ? session.payment_intent 
-            : session.payment_intent?.id ?? "";
-          await PaymentService.handleCheckoutCompleted(session.id, paymentIntentId);
+          await HandleCheckoutCompletedService.execute(session);
         }
         break;
       }
       case "checkout.session.expired": {
         if (StripeService.isCheckoutSessionEvent(event)) {
           const session = event.data.object;
-          await PaymentService.handleCheckoutExpired(session.id);
+          await HandleCheckoutExpiredService.execute(session.id);
         }
         break;
       }

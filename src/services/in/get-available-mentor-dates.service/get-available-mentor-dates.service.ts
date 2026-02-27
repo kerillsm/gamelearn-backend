@@ -25,11 +25,18 @@ export class GetAvailableMentorDates {
       throw new Error("Invalid year or month");
     }
 
+    const userToday = DateTime.now().setZone(user.timezone).startOf("day");
+    const isCurrentMonth =
+      userToday.year === year && userToday.month === month;
+    const startDay = isCurrentMonth
+      ? (userToday > userMonthStart ? userToday : userMonthStart)
+      : userMonthStart;
+
     // Result in ISO date strings
     const result: string[] = [];
 
     for (
-      let day = userMonthStart;
+      let day = startDay;
       day <= userMonthEnd;
       day = day.plus({ days: 1 })
     ) {
@@ -40,8 +47,9 @@ export class GetAvailableMentorDates {
         sessionType,
       );
 
-      if (intervals.length > 0) {
-        result.push(day.toISODate());
+      const isoDate = day.toISODate();
+      if (intervals.length > 0 && isoDate) {
+        result.push(isoDate);
       }
     }
 

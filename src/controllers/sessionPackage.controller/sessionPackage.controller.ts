@@ -2,7 +2,7 @@ import Joi from "joi";
 import { AuthRequired } from "../../lib/decorators/authRequired.decorator";
 import { Validate } from "../../lib/decorators/validate.decorator";
 import { Context } from "koa";
-import { CreateSessionPackageService } from "../../services/in/create-session-package.service";
+import { BookSessionPackageService } from "../../services/in/book-session-package.service";
 import { SessionPackageType } from "@prisma/client";
 import { GetUserVibeCheckSessionService } from "../../services/in/get-user-vibe-check-session.service";
 import { ListSessionPackagesService } from "../../services/in/list-session-packages.service";
@@ -79,7 +79,7 @@ export class SessionPackageController {
       sessionType: SessionPackageType;
     };
 
-    const result = await CreateSessionPackageService.create({
+    const result = await BookSessionPackageService.execute({
       mentorSlug,
       sessionType,
       sessions,

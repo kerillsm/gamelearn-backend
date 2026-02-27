@@ -1,6 +1,6 @@
 import { SessionPackageType } from "@prisma/client";
 
-export interface CreateSessionPackageDTO {
+export interface BookSessionPackageDTO {
   userId: string;
   mentorSlug: string;
   sessionType: SessionPackageType;

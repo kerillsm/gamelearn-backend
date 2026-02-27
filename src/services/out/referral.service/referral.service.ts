@@ -1,4 +1,3 @@
-import { ReferralEarningType } from "@prisma/client";
 import { prisma } from "../../../lib/orm/prisma";
 
 export class ReferralService {
@@ -48,44 +47,12 @@ export class ReferralService {
     return referral?.referralCode.userId ?? null;
   }
 
-  static async createEarning(
-    referrerUserId: string,
-    sessionPackageId: string,
-    amount: number,
-    type: ReferralEarningType = ReferralEarningType.CLIENT_REFERRAL,
-  ) {
-    return prisma.referralEarning.create({
-      data: { referrerUserId, sessionPackageId, amount, type },
-    });
-  }
-
-  static async getEarningsByUserId(userId: string) {
-    return prisma.referralEarning.findMany({
-      where: { referrerUserId: userId },
-      include: { sessionPackage: true },
-      orderBy: { createdAt: "desc" },
-    });
-  }
-
-  static async getEarningsBySessionPackageId(sessionPackageId: string) {
-    return prisma.referralEarning.findMany({
-      where: { sessionPackageId },
-    });
-  }
-
-  static async markEarningPaidOut(earningId: string) {
-    return prisma.referralEarning.update({
-      where: { id: earningId },
-      data: { isPaidOut: true },
-    });
-  }
-
-  static async deleteUnpaidEarningsBySessionPackageId(sessionPackageId: string) {
-    return prisma.referralEarning.deleteMany({
-      where: {
-        sessionPackageId,
-        isPaidOut: false,
-      },
+  /**
+   * Returns the full Referral record for a referred user (needed for PaymentReferral.referralId).
+   */
+  static async getReferralByReferredUserId(userId: string) {
+    return prisma.referral.findUnique({
+      where: { referredUserId: userId },
     });
   }
 }

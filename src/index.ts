@@ -109,7 +109,7 @@ router.use(
 app.use(router.routes()).use(router.allowedMethods());
 // every hour
 cron.schedule("0 * * * *", AutoCompleteApprovedSessionsService.execute);
-cron.schedule("* * * * *", AutoRejectExpiredPackagesService.execute);
+cron.schedule("0 * * * *", AutoRejectExpiredPackagesService.execute);
 
 // Start server
 if (appConfig.appEnv === "development") {
