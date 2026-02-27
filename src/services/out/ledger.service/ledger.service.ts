@@ -32,4 +32,17 @@ export class LedgerService {
   }) {
     return prisma.ledgerEntry.create({ data });
   }
+
+  static async releasePendingEntriesForPayments(paymentIds: string[]) {
+    if (paymentIds.length === 0) {
+      return { count: 0 };
+    }
+    return prisma.ledgerEntry.updateMany({
+      where: {
+        paymentId: { in: paymentIds },
+        status: LedgerStatus.PENDING,
+      },
+      data: { status: LedgerStatus.RELEASED },
+    });
+  }
 }

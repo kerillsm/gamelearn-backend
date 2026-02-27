@@ -26,6 +26,7 @@ import { adminMentorProfileRoutes } from "./routes/adminMentorProfile.routes";
 import { adminMentorApplicationRoutes } from "./routes/adminMentorApplication.routes";
 import { AutoCompleteApprovedSessionsService } from "./services/in/auto-complete-approved-sessions.service";
 import { AutoRejectExpiredPackagesService } from "./services/in/auto-reject-expired-packages.service";
+import { ReleasePaymentService } from "./services/in/release-payment.service";
 
 // Initialize Koa app
 const app = new Koa();
@@ -110,6 +111,7 @@ app.use(router.routes()).use(router.allowedMethods());
 // every hour
 cron.schedule("0 * * * *", AutoCompleteApprovedSessionsService.execute);
 cron.schedule("0 * * * *", AutoRejectExpiredPackagesService.execute);
+cron.schedule("0 * * * *", ReleasePaymentService.execute);
 
 // Start server
 if (appConfig.appEnv === "development") {
