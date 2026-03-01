@@ -141,4 +141,45 @@ export class StripeService {
       reason,
     });
   }
+
+  // --- Payment capture: fetch PaymentIntent, Charge, BalanceTransaction for fee/net ---
+
+  static async getPaymentIntent(paymentIntentId: string): Promise<Stripe.PaymentIntent> {
+    return stripe.paymentIntents.retrieve(paymentIntentId);
+  }
+
+  /**
+   * Returns the Charge for a PaymentIntent (expands latest_charge if needed).
+   */
+  static async getChargeFromPaymentIntent(
+    paymentIntent: Stripe.PaymentIntent,
+  ): Promise<Stripe.Charge | null> {
+    const latestChargeId =
+      typeof paymentIntent.latest_charge === "string"
+        ? paymentIntent.latest_charge
+        : paymentIntent.latest_charge?.id;
+    if (!latestChargeId) return null;
+    const charge = await stripe.charges.retrieve(latestChargeId);
+    return charge;
+  }
+
+  /**
+   * Returns fee (cents) and net (cents) from the charge's balance transaction.
+   */
+  static async getBalanceTransactionFeeAndNet(
+    charge: Stripe.Charge,
+  ): Promise<{ feeCents: number; netCents: number }> {
+    const btId =
+      typeof charge.balance_transaction === "string"
+        ? charge.balance_transaction
+        : charge.balance_transaction?.id;
+    if (!btId) {
+      return { feeCents: 0, netCents: 0 };
+    }
+    const bt = await stripe.balanceTransactions.retrieve(btId);
+    // Stripe amounts are in cents; fee and net are integers
+    const feeCents = bt.fee ?? 0;
+    const netCents = bt.net ?? 0;
+    return { feeCents, netCents };
+  }
 }

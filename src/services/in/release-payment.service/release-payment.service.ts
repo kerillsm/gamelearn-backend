@@ -1,4 +1,4 @@
-import { LedgerStatus, SessionPackStatus } from "@prisma/client";
+import { SessionPackStatus } from "@prisma/client";
 import { LedgerService } from "../../out/ledger.service";
 import { SessionPackageService } from "../../out/sessionPackage.service";
 
@@ -10,10 +10,14 @@ type ReleasePaymentResult = {
   releasedCount: number;
 };
 
+/**
+ * Finds completed packages past the release window that have a payment with ledger transactions.
+ * Actual payout execution (creating Payout records, Stripe transfers) is handled elsewhere;
+ * this service is kept for compatibility and can be extended to set holdUntil or trigger payouts.
+ */
 export class ReleasePaymentService {
   static async execute(): Promise<ReleasePaymentResult> {
     console.log("Running release payment service...");
-    // Release when 48h have passed since last session: (lastSessionEndAt + 48h) <= now  =>  lastSessionEndAt <= now - 48h
     const now = Date.now();
     const releaseEarliestAt = new Date(
       now - RELEASE_AFTER_HOURS * 60 * 60 * 1000,
@@ -23,13 +27,7 @@ export class ReleasePaymentService {
       {
         status: SessionPackStatus.COMPLETED,
         lastSessionEndAt: { lte: releaseEarliestAt },
-        payment: {
-          ledgerEntries: {
-            some: {
-              status: LedgerStatus.PENDING,
-            },
-          },
-        },
+        payment: { isNot: null },
       },
       { payment: { select: { id: true } } },
     );
@@ -40,7 +38,7 @@ export class ReleasePaymentService {
 
     if (paymentIds.length === 0) {
       console.log(
-        `Release payment: no completed packages with pending ledger entries that are older than ${RELEASE_AFTER_HOURS}h.`,
+        `Release payment: no completed packages with payments older than ${RELEASE_AFTER_HOURS}h.`,
       );
       return {
         packagesProcessed: 0,

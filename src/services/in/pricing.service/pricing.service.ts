@@ -76,16 +76,15 @@ export class PricingService {
     }
 
     const serviceFeeAmount = totalPrice * serviceFee;
-    const totalReferralBonuses = clientReferralBonus + mentorReferralBonus;
-    const platformFeeAmount = serviceFeeAmount;
-    const mentorEarnings = totalPrice - serviceFeeAmount - totalReferralBonuses;
+    const mentorEarnings =
+      totalPrice - serviceFeeAmount - clientReferralBonus - mentorReferralBonus;
 
     return {
       totalPrice,
       sessionPrice,
       serviceFee,
       mentorEarnings,
-      platformFee: platformFeeAmount,
+      platformFee: serviceFeeAmount,
       clientReferralBonus,
       mentorReferralBonus,
       referralDiscount,

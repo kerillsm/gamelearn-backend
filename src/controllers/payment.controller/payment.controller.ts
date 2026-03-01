@@ -31,7 +31,10 @@ export class PaymentController {
       case "checkout.session.completed": {
         if (StripeService.isCheckoutSessionEvent(event)) {
           const session = event.data.object;
-          await HandleCheckoutCompletedService.execute(session);
+          await HandleCheckoutCompletedService.execute(
+            session,
+            event.id,
+          );
         }
         break;
       }
