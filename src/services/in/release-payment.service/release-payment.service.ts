@@ -1,63 +1,101 @@
-import { SessionPackStatus } from "@prisma/client";
-import { LedgerService } from "../../out/ledger.service";
-import { SessionPackageService } from "../../out/sessionPackage.service";
+import { SplitRole } from "@prisma/client";
+import { prisma } from "../../../lib/orm/prisma";
+import { PayoutSplitService } from "../../out/payout-split.service";
+import { StripeService } from "../../out/stripe.service";
+import { UserService } from "../../out/user.service";
+import type { ReleasePaymentResult } from "./types";
+import { buildIdempotencyKey, groupSplitsByUserAndCurrency } from "./utils";
 
-const RELEASE_AFTER_HOURS = 48;
+const PAYEE_ROLES = [
+  SplitRole.MENTOR,
+  SplitRole.MENTOR_REFERRER,
+  SplitRole.STUDENT_REFERRER,
+] as const;
 
-type ReleasePaymentResult = {
-  packagesProcessed: number;
-  paymentIds: string[];
-  releasedCount: number;
-};
+/** Only release payments for completed session packages, 48h after last session end. */
+const HOLD_HOURS_AFTER_LAST_SESSION = 48;
 
 /**
- * Finds completed packages past the release window that have a payment with ledger transactions.
- * Actual payout execution (creating Payout records, Stripe transfers) is handled elsewhere;
- * this service is kept for compatibility and can be extended to set holdUntil or trigger payouts.
+ * Releases payable funds to Mentors and Referrers. Only considers PayoutSplits whose
+ * session package is COMPLETED and lastSessionEndAt was at least 48 hours ago. Groups
+ * by (userId, currency), creates Stripe Connect transfers, then marks splits as PAID.
+ * Idempotent via key from split ids.
  */
 export class ReleasePaymentService {
   static async execute(): Promise<ReleasePaymentResult> {
-    console.log("Running release payment service...");
-    const now = Date.now();
-    const releaseEarliestAt = new Date(
-      now - RELEASE_AFTER_HOURS * 60 * 60 * 1000,
+    const result: ReleasePaymentResult = {
+      groupsProcessed: 0,
+      payoutsCreated: 0,
+      skippedNoConnect: 0,
+      errors: [],
+    };
+
+    const splits = await PayoutSplitService.findPendingSplitsEligibleForRelease(
+      [...PAYEE_ROLES],
+      HOLD_HOURS_AFTER_LAST_SESSION,
     );
+    const groups = groupSplitsByUserAndCurrency(splits);
+    if (groups.length === 0) return result;
 
-    const packages = await SessionPackageService.getAll(
-      {
-        status: SessionPackStatus.COMPLETED,
-        lastSessionEndAt: { lte: releaseEarliestAt },
-        payment: { isNot: null },
-      },
-      { payment: { select: { id: true } } },
-    );
+    for (const group of groups) {
+      result.groupsProcessed += 1;
 
-    const paymentIds = packages
-      .map((pkg) => pkg.payment?.id)
-      .filter((id): id is string => id != null);
+      const connectAccountId =
+        (await UserService.getById(group.userId))?.stripeConnectAccountId ??
+        null;
 
-    if (paymentIds.length === 0) {
-      console.log(
-        `Release payment: no completed packages with payments older than ${RELEASE_AFTER_HOURS}h.`,
-      );
-      return {
-        packagesProcessed: 0,
-        paymentIds: [],
-        releasedCount: 0,
-      };
+      if (!connectAccountId) {
+        result.skippedNoConnect += 1;
+        result.errors.push(
+          `ReleasePayment: no Stripe Connect account for user ${group.userId} (${group.role}, ${group.amountCents} cents); skipping.`,
+        );
+        continue;
+      }
+
+      const idempotencyKey = buildIdempotencyKey(group.splitIds);
+      let stripeTransferId: string;
+
+      try {
+        const transfer = await StripeService.createTransfer(
+          connectAccountId,
+          group.amountCents / 100,
+          {
+            payoutType: group.role,
+            userId: group.userId,
+          },
+          { currency: group.currency, idempotencyKey },
+        );
+        stripeTransferId = transfer.id;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        result.errors.push(
+          `ReleasePayment: Stripe transfer failed for user ${group.userId} (${group.role}): ${message}`,
+        );
+        continue;
+      }
+
+      if (
+        await PayoutSplitService.hasSplitWithStripeTransferId(stripeTransferId)
+      )
+        continue;
+
+      try {
+        await prisma.$transaction(async (tx) => {
+          await PayoutSplitService.markSplitsAsPaid(
+            group.splitIds,
+            stripeTransferId,
+            tx as typeof prisma,
+          );
+        });
+        result.payoutsCreated += 1;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        result.errors.push(
+          `ReleasePayment: DB transaction failed after Stripe transfer ${stripeTransferId} for user ${group.userId}: ${message}. Retry will reuse same transfer via idempotency key.`,
+        );
+      }
     }
 
-    const { count: releasedCount } =
-      await LedgerService.releasePendingEntriesForPayments(paymentIds);
-
-    console.log(
-      `Release payment: ${packages.length} packages, ${releasedCount} ledger entries released.`,
-    );
-
-    return {
-      packagesProcessed: packages.length,
-      paymentIds,
-      releasedCount,
-    };
+    return result;
   }
 }

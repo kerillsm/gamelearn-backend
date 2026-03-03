@@ -34,8 +34,7 @@ model User {
   mentorApplication MentorApplication?
   testimonialsGiven  Testimonial[]  @relation("UserTestimonialsGiven")
   testimonialsReceived Testimonial[] @relation("MentorTestimonialsReceived")
-  ledgerAccounts     LedgerAccount[]
-  payouts            Payout[]
+  payoutSplits PayoutSplit[]
 }
 
 enum StripeConnectStatus {
@@ -180,7 +179,7 @@ model SessionPackage {
   mentor    User     @relation("mentorSessionPacks", fields: [mentorId], references: [id], onDelete: Cascade)
   applicant User     @relation("applicantSessionPacks", fields: [applicantId], references: [id], onDelete: Cascade)
   sessions  Session[]
-  payment   Payment?
+  payment   Payment? 
 
   @@index([mentorId])
   @@index([applicantId])
@@ -351,154 +350,41 @@ model Payment {
   referrals              PaymentReferral[]
 
   // accounting
-  transactions           LedgerTransaction[]
+  payoutSplits           PayoutSplit[]
 
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 }
 
-// Idempotency lock per Stripe event / intent processing step
-model PaymentProcessingLock {
-  id                 String @id @default(uuid())
-  stripeEventId      String @unique
-  stripeObjectId     String // e.g., payment_intent_id
-  kind               String // e.g., "PAYMENT_SUCCEEDED", "REFUND", "DISPUTE"
-  createdAt          DateTime @default(now())
-
-  @@index([stripeObjectId])
-}
-
-enum LedgerAccountCategory {
-  ASSET
-  LIABILITY
-  REVENUE
-  EXPENSE
-  EQUITY
-}
-
-// Chart-of-accounts style account.
-// For user-scoped liabilities you can either:
-// - create one account per user per code, OR
-// - reuse one code + set userId (this schema supports both).
-model LedgerAccount {
-  id        String @id @default(uuid())
-
-  code      String @db.VarChar(64) // e.g. STRIPE_CLEARING, MENTOR_PAYABLE, REFERRAL_PAYABLE, PLATFORM_COMMISSION, STRIPE_FEE
-  name      String
-  category  LedgerAccountCategory
-
-  // optional user scoping for payable accounts
-  userId    String?
-  user      User? @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  entries   LedgerEntry[]
-
-  createdAt DateTime @default(now())
-
-  @@index([category])
-  @@index([code])
-  @@unique([code, userId])
-}
-
-enum LedgerTransactionType {
-  PAYMENT_CAPTURE
-  STRIPE_FEE
-  REFERRAL_COMMISSION
-  PAYOUT
-  REFUND
-  DISPUTE
-  ADJUSTMENT
-}
-
-model LedgerTransaction {
-  id        String @id @default(uuid())
-
-  paymentId String?
-  payment   Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
-
-  type      LedgerTransactionType
-
-  entries   LedgerEntry[]
-
-  payouts   Payout[]
-
-  createdAt DateTime @default(now())
-
-  @@index([paymentId])
-  @@index([type])
-}
-
-enum LedgerDirection {
-  DEBIT
-  CREDIT
-}
-
-// Ledger entry = one line of a balanced transaction.
-model LedgerEntry {
-  id              String @id @default(uuid())
-
-  transactionId   String
-  transaction     LedgerTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-
-  accountId       String
-  account         LedgerAccount @relation(fields: [accountId], references: [id])
-
-  amountCents     Int
-  direction       LedgerDirection
-
-  // For liabilities that are held (escrow)
-  holdUntil       DateTime?
-
-
-  metadata        Json?
-
-  createdAt       DateTime @default(now())
-
-  @@index([accountId])
-  @@index([holdUntil])
-}
-
-//////////////////////////////
-// Operational payouts
-//////////////////////////////
-
-enum PayoutTargetType {
+enum SplitRole {
   MENTOR
-  REFERRER
+  MENTOR_REFERRER
+  STUDENT_REFERRER
+  PLATFORM
+  STRIPE_FEE
 }
 
-enum PayoutStatus {
+enum SplitStatus {
   PENDING
-  PROCESSING
   PAID
-  FAILED
+  CANCELLED
 }
 
-model Payout {
-  id                  String @id @default(uuid())
+model PayoutSplit {
+  id        String @id @default(uuid())
 
-  targetType          PayoutTargetType
+  paymentId String
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
 
-  userId              String
-  user                User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String? // null if this is platform
+  user      User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  // The accounting transaction that represents this payout (LIABILITY -> ASSET)
-  ledgerTransactionId String
-  ledgerTransaction   LedgerTransaction @relation(fields: [ledgerTransactionId], references: [id], onDelete: Cascade)
+  role      SplitRole
 
-  // Stripe transfer id for connected accounts
-  stripeTransferId    String? @unique
+  amountCents    Int
+  currency  String
 
-  amountCents         Int
-  currency            String
+  status    SplitStatus @default(PENDING)
 
-  status              PayoutStatus @default(PENDING)
-
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-
-  @@index([userId])
-  @@index([status])
+  stripeTransferId String? @unique
 }
-
-

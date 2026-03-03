@@ -1,21 +1,19 @@
 import * as Sentry from "@sentry/node";
 import Stripe from "stripe";
 import {
-  LedgerAccountCategory,
-  LedgerDirection,
-  LedgerTransactionType,
   MentorProfileStatus,
   PaymentStatus,
+  PayoutSplit,
   SessionPackStatus,
   SessionStatus,
+  SplitRole,
+  SplitStatus,
 } from "@prisma/client";
 import { prisma } from "../../../lib/orm/prisma";
 import { SessionPackageService } from "../../out/sessionPackage.service";
 import { SessionService } from "../../out/session.service";
 import { PaymentService } from "../../out/payment.service";
 import { PaymentProcessingLockService } from "../../out/payment-processing-lock.service";
-import { LedgerService } from "../../out/ledger.service";
-import { LedgerAccountsService } from "../../out/ledger-accounts.service";
 import { UserService } from "../../out/user.service";
 import { ReferralService } from "../../out/referral.service";
 import { StripeService } from "../../out/stripe.service";
@@ -26,7 +24,6 @@ import {
   EmailService,
   buildApplicantBookingConfirmationEmail,
 } from "../../out/email.service";
-import { LEDGER_ACCOUNT_CODES } from "../../../types/ledger";
 
 /** Referral bonus percent used in PricingService (for PaymentReferral snapshot). */
 const REFERRER_BONUS_PERCENT = 5;
@@ -35,10 +32,9 @@ const LOCK_KIND = "CHECKOUT_COMPLETED";
 
 export class HandleCheckoutCompletedService {
   /**
-   * Processes a completed Stripe Checkout session: idempotency, Payment update,
-   * double-entry ledger (PAYMENT_CAPTURE, STRIPE_FEE, REFERRAL_COMMISSION), then
-   * package/session status and email. No payout execution here (payouts happen
-   * 2 days after package completion elsewhere).
+   * Processes a completed Stripe Checkout session: idempotency, Payment and PayoutSplits creation,
+   * PaymentReferral snapshot, then package/session status and email. No payout execution here
+   * (release-payment job pays PENDING splits to mentors and referrers via Stripe Connect).
    */
   static async execute(
     checkoutSession: Stripe.Checkout.Session,
@@ -229,7 +225,7 @@ export class HandleCheckoutCompletedService {
       }
     }
 
-    // 4) Single Prisma transaction: Payment, ledger, package/session updates
+    // 4) Single Prisma transaction: Payment, PayoutSplits, PaymentReferrals, package/session updates
     await prisma.$transaction(async (tx) => {
       const payment = await PaymentService.create(
         {
@@ -245,167 +241,78 @@ export class HandleCheckoutCompletedService {
         tx as typeof prisma,
       );
 
-      // GetOrCreate ledger accounts (global and user-scoped)
-      const stripeClearing = await LedgerAccountsService.getOrCreateAccount(
-        LEDGER_ACCOUNT_CODES.STRIPE_CLEARING,
-        LedgerAccountCategory.ASSET,
-        "Stripe clearing (cash in transit)",
-        null,
-        tx as typeof prisma,
-      );
-      const platformCommission = await LedgerAccountsService.getOrCreateAccount(
-        LEDGER_ACCOUNT_CODES.PLATFORM_COMMISSION,
-        LedgerAccountCategory.REVENUE,
-        "Platform commission revenue",
-        null,
-        tx as typeof prisma,
-      );
-      const stripeFeeAccount = await LedgerAccountsService.getOrCreateAccount(
-        LEDGER_ACCOUNT_CODES.STRIPE_FEE,
-        LedgerAccountCategory.EXPENSE,
-        "Stripe fee expense",
-        null,
-        tx as typeof prisma,
-      );
-      const mentorPayable = await LedgerAccountsService.getOrCreateAccount(
-        LEDGER_ACCOUNT_CODES.MENTOR_PAYABLE,
-        LedgerAccountCategory.LIABILITY,
-        "Mentor payable",
-        sessionPackage.mentorId,
-        tx as typeof prisma,
-      );
-
-      // A) PAYMENT_CAPTURE: gross received -> clearing; mentor liability + platform revenue.
-      // No holdUntil here: payout is after package completion + 2 days (handled elsewhere).
-      await LedgerService.createBalancedTransaction(
-        payment.id,
-        LedgerTransactionType.PAYMENT_CAPTURE,
-        [
+      // PaymentReferral snapshot per referrer (from PricingService)
+      if (clientReferralBonusCents > 0 && clientReferral && clientReferrerId) {
+        await PaymentService.createPaymentReferral(
           {
-            accountId: stripeClearing.id,
-            amountCents: grossAmountCents,
-            direction: LedgerDirection.DEBIT,
-          },
-          {
-            accountId: mentorPayable.id,
-            amountCents: mentorPayoutCents,
-            direction: LedgerDirection.CREDIT,
-          },
-          {
-            accountId: platformCommission.id,
-            amountCents: platformCommissionCents,
-            direction: LedgerDirection.CREDIT,
-          },
-        ],
-        null,
-        tx as typeof prisma,
-      );
-
-      // B) STRIPE_FEE: record Stripe fee expense and reduce clearing (balanced).
-      await LedgerService.createBalancedTransaction(
-        payment.id,
-        LedgerTransactionType.STRIPE_FEE,
-        [
-          {
-            accountId: stripeFeeAccount.id,
-            amountCents: stripeFeeCents,
-            direction: LedgerDirection.DEBIT,
-          },
-          {
-            accountId: stripeClearing.id,
-            amountCents: stripeFeeCents,
-            direction: LedgerDirection.CREDIT,
-          },
-        ],
-        null,
-        tx as typeof prisma,
-      );
-
-      // C) REFERRAL_COMMISSION (if any): expense and referrer liability; PaymentReferral snapshot per referrer (from PricingService).
-      if (totalReferralCents > 0) {
-        const referralCommission =
-          await LedgerAccountsService.getOrCreateAccount(
-            LEDGER_ACCOUNT_CODES.REFERRAL_COMMISSION,
-            LedgerAccountCategory.EXPENSE,
-            "Referral commission expense",
-            null,
-            tx as typeof prisma,
-          );
-        const entries: Array<{
-          accountId: string;
-          amountCents: number;
-          direction: LedgerDirection;
-        }> = [
-          {
-            accountId: referralCommission.id,
-            amountCents: totalReferralCents,
-            direction: LedgerDirection.DEBIT,
-          },
-        ];
-        if (
-          clientReferralBonusCents > 0 &&
-          clientReferral &&
-          clientReferrerId
-        ) {
-          const clientReferrerPayable =
-            await LedgerAccountsService.getOrCreateAccount(
-              LEDGER_ACCOUNT_CODES.REFERRAL_PAYABLE,
-              LedgerAccountCategory.LIABILITY,
-              "Referral payable",
-              clientReferrerId,
-              tx as typeof prisma,
-            );
-          entries.push({
-            accountId: clientReferrerPayable.id,
+            paymentId: payment.id,
+            referralId: clientReferral.id,
             amountCents: clientReferralBonusCents,
-            direction: LedgerDirection.CREDIT,
-          });
-          await PaymentService.createPaymentReferral(
-            {
-              paymentId: payment.id,
-              referralId: clientReferral.id,
-              amountCents: clientReferralBonusCents,
-              percent: REFERRER_BONUS_PERCENT,
-            },
-            tx as typeof prisma,
-          );
-        }
-        if (
-          mentorReferralBonusCents > 0 &&
-          mentorReferral &&
-          mentorReferrerId
-        ) {
-          const mentorReferrerPayable =
-            await LedgerAccountsService.getOrCreateAccount(
-              LEDGER_ACCOUNT_CODES.REFERRAL_PAYABLE,
-              LedgerAccountCategory.LIABILITY,
-              "Referral payable",
-              mentorReferrerId,
-              tx as typeof prisma,
-            );
-          entries.push({
-            accountId: mentorReferrerPayable.id,
-            amountCents: mentorReferralBonusCents,
-            direction: LedgerDirection.CREDIT,
-          });
-          await PaymentService.createPaymentReferral(
-            {
-              paymentId: payment.id,
-              referralId: mentorReferral.id,
-              amountCents: mentorReferralBonusCents,
-              percent: REFERRER_BONUS_PERCENT,
-            },
-            tx as typeof prisma,
-          );
-        }
-        await LedgerService.createBalancedTransaction(
-          payment.id,
-          LedgerTransactionType.REFERRAL_COMMISSION,
-          entries,
-          null,
+            percent: REFERRER_BONUS_PERCENT,
+          },
           tx as typeof prisma,
         );
       }
+      if (mentorReferralBonusCents > 0 && mentorReferral && mentorReferrerId) {
+        await PaymentService.createPaymentReferral(
+          {
+            paymentId: payment.id,
+            referralId: mentorReferral.id,
+            amountCents: mentorReferralBonusCents,
+            percent: REFERRER_BONUS_PERCENT,
+          },
+          tx as typeof prisma,
+        );
+      }
+
+      // PayoutSplits: one per slice (release-payment will pay MENTOR, MENTOR_REFERRER, STUDENT_REFERRER via Stripe Connect)
+      const payoutSplitsData: Omit<PayoutSplit, "id" | "stripeTransferId">[] = [
+        {
+          paymentId: payment.id,
+          userId: sessionPackage.mentorId,
+          role: SplitRole.MENTOR,
+          amountCents: mentorPayoutCents,
+          currency,
+          status: SplitStatus.PENDING,
+        },
+        {
+          paymentId: payment.id,
+          userId: null,
+          role: SplitRole.PLATFORM,
+          amountCents: platformCommissionCents,
+          currency,
+          status: SplitStatus.PENDING,
+        },
+        {
+          paymentId: payment.id,
+          userId: null,
+          role: SplitRole.STRIPE_FEE,
+          amountCents: stripeFeeCents,
+          currency,
+          status: SplitStatus.PAID,
+        },
+      ];
+      if (clientReferralBonusCents > 0 && clientReferrerId) {
+        payoutSplitsData.push({
+          paymentId: payment.id,
+          userId: clientReferrerId,
+          role: SplitRole.STUDENT_REFERRER,
+          amountCents: clientReferralBonusCents,
+          currency,
+          status: SplitStatus.PENDING,
+        });
+      }
+      if (mentorReferralBonusCents > 0 && mentorReferrerId) {
+        payoutSplitsData.push({
+          paymentId: payment.id,
+          userId: mentorReferrerId,
+          role: SplitRole.MENTOR_REFERRER,
+          amountCents: mentorReferralBonusCents,
+          currency,
+          status: SplitStatus.PENDING,
+        });
+      }
+      await tx.payoutSplit.createMany({ data: payoutSplitsData });
 
       // Update package and sessions status
       await tx.sessionPackage.updateMany({

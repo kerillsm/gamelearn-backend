@@ -117,17 +117,31 @@ export class StripeService {
     return stripe.accounts.retrieve(accountId);
   }
 
+  /**
+   * Create a Connect transfer to a connected account.
+   * @param destination - Connected account ID (recipient's stripeConnectAccountId)
+   * @param amountInDollars - Amount in dollars (converted to cents for Stripe)
+   * @param metadata - Optional metadata (e.g. payoutType, userId)
+   * @param options - Optional currency (default "usd") and idempotencyKey for safe retries
+   */
   static async createTransfer(
-    accountId: string,
-    amount: number,
+    destination: string,
+    amountInDollars: number,
     metadata?: Record<string, string>,
+    options?: { currency?: string; idempotencyKey?: string },
   ) {
-    return stripe.transfers.create({
-      amount: Math.round(amount * 100), // Convert to cents
-      currency: "usd",
-      destination: accountId,
-      metadata,
-    });
+    const currency = options?.currency ?? "usd";
+    const requestParams: Stripe.TransferCreateParams = {
+      amount: Math.round(amountInDollars * 100), // Convert to cents
+      currency: currency.toLowerCase(),
+      destination,
+      metadata: metadata ?? undefined,
+    };
+    const requestOptions: Stripe.RequestOptions = {};
+    if (options?.idempotencyKey) {
+      requestOptions.idempotencyKey = options.idempotencyKey;
+    }
+    return stripe.transfers.create(requestParams, requestOptions);
   }
 
   static async createRefund(

@@ -1,7 +1,7 @@
 export { centsToDollars } from "./format";
 export {
-  getAccountBalance,
-  getTotalBalanceByCode,
-  type AccountBalance,
-} from "./accountBalance";
+  getPayoutSplitBalance,
+  getPayoutSplitTotalByRoles,
+  type PayoutSplitBalance,
+} from "./payoutSplitBalance";
 export { getEarningsWaitingSessionCompletion } from "./earningsWaitingCompletion";

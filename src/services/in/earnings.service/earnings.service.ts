@@ -1,6 +1,5 @@
-import { LedgerAccountCategory } from "@prisma/client";
+import { SplitRole, SplitStatus } from "@prisma/client";
 import { prisma } from "../../../lib/orm/prisma";
-import { LEDGER_ACCOUNT_CODES } from "../../../types/ledger";
 import { ReferralService } from "../../out/referral.service";
 import type {
   EarningsSummaryDto,
@@ -8,15 +7,15 @@ import type {
 } from "./earnings.service.interface";
 import {
   centsToDollars,
-  getAccountBalance,
-  getTotalBalanceByCode,
+  getPayoutSplitBalance,
+  getPayoutSplitTotalByRoles,
   getEarningsWaitingSessionCompletion,
 } from "./utils";
 
 export class EarningsService {
   /**
    * Returns the full earnings summary for the given user based on role and referrer status.
-   * All amounts are in dollars. isReferrer is derived from whether the user has a referral code.
+   * All amounts are in dollars. Uses PayoutSplit (no Ledger). isReferrer = user has a referral code.
    */
   static async getEarningsForUser(
     params: GetEarningsForUserParams,
@@ -33,18 +32,16 @@ export class EarningsService {
       isReferrer,
     };
 
-    const totalPaidOutAgg = await prisma.payout.aggregate({
-      where: { userId, status: "PAID" },
+    const totalPaidOutAgg = await prisma.payoutSplit.aggregate({
+      where: { userId, status: SplitStatus.PAID },
       _sum: { amountCents: true },
     });
-    result.totalPaidOut = centsToDollars(totalPaidOutAgg._sum?.amountCents ?? 0);
+    result.totalPaidOut = centsToDollars(
+      totalPaidOutAgg._sum?.amountCents ?? 0,
+    );
 
     if (isMentor) {
-      const mentor = await getAccountBalance(
-        LEDGER_ACCOUNT_CODES.MENTOR_PAYABLE,
-        LedgerAccountCategory.LIABILITY,
-        userId,
-      );
+      const mentor = await getPayoutSplitBalance(userId, [SplitRole.MENTOR]);
       result.mentorEarnings = centsToDollars(mentor.balanceCents);
       result.mentorEarningsAvailable = centsToDollars(mentor.availableCents);
       result.mentorEarningsOnHold = centsToDollars(mentor.onHoldCents);
@@ -54,11 +51,10 @@ export class EarningsService {
     }
 
     if (isReferrer) {
-      const referral = await getAccountBalance(
-        LEDGER_ACCOUNT_CODES.REFERRAL_PAYABLE,
-        LedgerAccountCategory.LIABILITY,
-        userId,
-      );
+      const referral = await getPayoutSplitBalance(userId, [
+        SplitRole.MENTOR_REFERRER,
+        SplitRole.STUDENT_REFERRER,
+      ]);
       result.referralEarnings = centsToDollars(referral.balanceCents);
       result.referralEarningsAvailable = centsToDollars(referral.availableCents);
       result.referralEarningsOnHold = centsToDollars(referral.onHoldCents);
@@ -76,24 +72,13 @@ export class EarningsService {
         stripeFee,
         waiting,
       ] = await Promise.all([
-        getAccountBalance(
-          LEDGER_ACCOUNT_CODES.PLATFORM_COMMISSION,
-          LedgerAccountCategory.REVENUE,
-          null,
-        ),
-        getTotalBalanceByCode(
-          LEDGER_ACCOUNT_CODES.MENTOR_PAYABLE,
-          LedgerAccountCategory.LIABILITY,
-        ),
-        getTotalBalanceByCode(
-          LEDGER_ACCOUNT_CODES.REFERRAL_PAYABLE,
-          LedgerAccountCategory.LIABILITY,
-        ),
-        getAccountBalance(
-          LEDGER_ACCOUNT_CODES.STRIPE_FEE,
-          LedgerAccountCategory.EXPENSE,
-          null,
-        ),
+        getPayoutSplitTotalByRoles([SplitRole.PLATFORM]),
+        getPayoutSplitTotalByRoles([SplitRole.MENTOR]),
+        getPayoutSplitTotalByRoles([
+          SplitRole.MENTOR_REFERRER,
+          SplitRole.STUDENT_REFERRER,
+        ]),
+        getPayoutSplitTotalByRoles([SplitRole.STRIPE_FEE]),
         getEarningsWaitingSessionCompletion(),
       ]);
 
@@ -127,8 +112,12 @@ export class EarningsService {
       result.totalStripeFeeWaitingSessionCompletion = centsToDollars(
         stripeFee.waitingSessionCompletionCents,
       );
-      result.earningsWaitingSessionCompletion = centsToDollars(waiting.totalCents);
-      result.mentorEarningsWaitingCompletion = centsToDollars(waiting.mentorCents);
+      result.earningsWaitingSessionCompletion = centsToDollars(
+        waiting.totalCents,
+      );
+      result.mentorEarningsWaitingCompletion = centsToDollars(
+        waiting.mentorCents,
+      );
       result.referralEarningsWaitingCompletion = centsToDollars(
         waiting.referralCents,
       );

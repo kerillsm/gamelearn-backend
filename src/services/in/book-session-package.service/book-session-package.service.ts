@@ -22,6 +22,7 @@ import { SessionValidationService } from "../session-validation.service";
 import { BookSessionPackageResult } from "./book-session-package.interface";
 import { ReferralService } from "../../out/referral.service";
 
+/** Payment and PayoutSplits are created on checkout completion (handle-checkout-completed), not here. */
 export class BookSessionPackageService {
   static async execute(
     data: BookSessionPackageDTO,

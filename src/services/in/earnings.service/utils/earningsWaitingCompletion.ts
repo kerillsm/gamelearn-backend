@@ -1,10 +1,9 @@
-import { LedgerDirection, SessionPackStatus } from "@prisma/client";
+import { SessionPackStatus, SplitRole } from "@prisma/client";
 import { prisma } from "../../../../lib/orm/prisma";
-import { LEDGER_ACCOUNT_CODES } from "../../../../types/ledger";
 
 /**
- * Sum CREDIT entry amounts for given account codes, for transactions linked to payments
- * whose session package status is not COMPLETED.
+ * Sum PayoutSplit amounts for splits whose session package status is not COMPLETED,
+ * broken down by mentor / referral / platform (for admin dashboard).
  */
 export async function getEarningsWaitingSessionCompletion(): Promise<{
   totalCents: number;
@@ -12,26 +11,26 @@ export async function getEarningsWaitingSessionCompletion(): Promise<{
   referralCents: number;
   platformCents: number;
 }> {
-  const where = {
-    direction: LedgerDirection.CREDIT,
-    transaction: {
-      payment: {
-        sessionPackage: { status: { not: SessionPackStatus.COMPLETED } },
-      },
+  const whereIncomplete = {
+    payment: {
+      sessionPackage: { status: { not: SessionPackStatus.COMPLETED } },
     },
   };
 
   const [mentor, referral, platform] = await Promise.all([
-    prisma.ledgerEntry.aggregate({
-      where: { ...where, account: { code: LEDGER_ACCOUNT_CODES.MENTOR_PAYABLE } },
+    prisma.payoutSplit.aggregate({
+      where: { ...whereIncomplete, role: SplitRole.MENTOR },
       _sum: { amountCents: true },
     }),
-    prisma.ledgerEntry.aggregate({
-      where: { ...where, account: { code: LEDGER_ACCOUNT_CODES.REFERRAL_PAYABLE } },
+    prisma.payoutSplit.aggregate({
+      where: {
+        ...whereIncomplete,
+        role: { in: [SplitRole.MENTOR_REFERRER, SplitRole.STUDENT_REFERRER] },
+      },
       _sum: { amountCents: true },
     }),
-    prisma.ledgerEntry.aggregate({
-      where: { ...where, account: { code: LEDGER_ACCOUNT_CODES.PLATFORM_COMMISSION } },
+    prisma.payoutSplit.aggregate({
+      where: { ...whereIncomplete, role: SplitRole.PLATFORM },
       _sum: { amountCents: true },
     }),
   ]);
