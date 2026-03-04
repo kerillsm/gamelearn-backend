@@ -388,3 +388,12 @@ model PayoutSplit {
 
   stripeTransferId String? @unique
 }
+
+model PaymentProcessingLock {
+  id             String   @id @default(uuid())
+  stripeEventId  String   @unique
+  stripeObjectId String
+  kind           String
+
+  createdAt      DateTime @db.Timestamptz @default(now())
+}

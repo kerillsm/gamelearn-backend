@@ -23,6 +23,7 @@ const HOLD_HOURS_AFTER_LAST_SESSION = 48;
  */
 export class ReleasePaymentService {
   static async execute(): Promise<ReleasePaymentResult> {
+    console.log("release payment service started");
     const result: ReleasePaymentResult = {
       groupsProcessed: 0,
       payoutsCreated: 0,
@@ -58,7 +59,7 @@ export class ReleasePaymentService {
       try {
         const transfer = await StripeService.createTransfer(
           connectAccountId,
-          group.amountCents / 100,
+          group.amountCents,
           {
             payoutType: group.role,
             userId: group.userId,
@@ -67,6 +68,7 @@ export class ReleasePaymentService {
         );
         stripeTransferId = transfer.id;
       } catch (err) {
+        console.log("err", err);
         const message = err instanceof Error ? err.message : String(err);
         result.errors.push(
           `ReleasePayment: Stripe transfer failed for user ${group.userId} (${group.role}): ${message}`,
@@ -95,6 +97,8 @@ export class ReleasePaymentService {
         );
       }
     }
+
+    console.log("result of release payment service", result);
 
     return result;
   }

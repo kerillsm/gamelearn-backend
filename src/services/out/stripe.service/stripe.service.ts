@@ -126,22 +126,23 @@ export class StripeService {
    */
   static async createTransfer(
     destination: string,
-    amountInDollars: number,
+    amountInCents: number,
     metadata?: Record<string, string>,
     options?: { currency?: string; idempotencyKey?: string },
   ) {
     const currency = options?.currency ?? "usd";
     const requestParams: Stripe.TransferCreateParams = {
-      amount: Math.round(amountInDollars * 100), // Convert to cents
+      amount: amountInCents,
       currency: currency.toLowerCase(),
       destination,
       metadata: metadata ?? undefined,
     };
-    const requestOptions: Stripe.RequestOptions = {};
-    if (options?.idempotencyKey) {
-      requestOptions.idempotencyKey = options.idempotencyKey;
-    }
-    return stripe.transfers.create(requestParams, requestOptions);
+    return stripe.transfers.create(
+      requestParams,
+      options?.idempotencyKey
+        ? { idempotencyKey: options.idempotencyKey }
+        : undefined,
+    );
   }
 
   static async createRefund(
@@ -158,7 +159,9 @@ export class StripeService {
 
   // --- Payment capture: fetch PaymentIntent, Charge, BalanceTransaction for fee/net ---
 
-  static async getPaymentIntent(paymentIntentId: string): Promise<Stripe.PaymentIntent> {
+  static async getPaymentIntent(
+    paymentIntentId: string,
+  ): Promise<Stripe.PaymentIntent> {
     return stripe.paymentIntents.retrieve(paymentIntentId);
   }
 
@@ -173,8 +176,7 @@ export class StripeService {
         ? paymentIntent.latest_charge
         : paymentIntent.latest_charge?.id;
     if (!latestChargeId) return null;
-    const charge = await stripe.charges.retrieve(latestChargeId);
-    return charge;
+    return stripe.charges.retrieve(latestChargeId);
   }
 
   /**

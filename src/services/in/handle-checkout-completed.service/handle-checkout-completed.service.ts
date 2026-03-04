@@ -156,8 +156,6 @@ export class HandleCheckoutCompletedService {
     const mentorReferralBonusCents = Math.round(
       pricing.mentorReferralBonus * 100,
     );
-    const totalReferralCents =
-      clientReferralBonusCents + mentorReferralBonusCents;
     const mentorPayoutCents =
       grossAmountCents -
       platformCommissionCents -

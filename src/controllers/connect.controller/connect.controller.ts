@@ -45,29 +45,4 @@ export class ConnectController {
     ctx.status = 200;
     ctx.body = result;
   }
-
-  @AuthRequired()
-  static async getPayouts(ctx: Context) {
-    const user = ctx.state.user!;
-    const payouts = await ConnectController.getPayoutsForUser(String(user.id));
-    ctx.status = 200;
-    ctx.body = { payouts };
-  }
-
-  private static async getPayoutsForUser(userId: string) {
-    const rows = await prisma.payout.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-    });
-
-    return rows.map((p) => ({
-      id: p.id,
-      amount: p.amountCents / 100,
-      status: p.status === "PAID" ? "COMPLETED" : p.status,
-      type: p.targetType === "MENTOR" ? "SESSION_EARNING" : "REFERRAL_BONUS",
-      createdAt: p.createdAt.toISOString(),
-      processedAt: p.status === "PAID" ? p.updatedAt.toISOString() : null,
-      failureReason: null,
-    }));
-  }
 }
