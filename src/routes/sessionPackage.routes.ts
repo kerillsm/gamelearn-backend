@@ -47,4 +47,10 @@ router.post(
   SessionPackageController.cancelSessionPackage,
 );
 
+router.post(
+  "/:sessionPackageId/dispute",
+  authMiddleware,
+  SessionPackageController.createDisputeSessionPackage,
+);
+
 export { router as sessionPackageRoutes };

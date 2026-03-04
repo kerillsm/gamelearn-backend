@@ -8,3 +8,4 @@ export {
   buildApplicantCanceledSessionPackageEmail,
   buildMentorCanceledSessionPackageEmail,
 } from "./session-package-cancellation.builder";
+export { buildDisputeReportedToAdminEmail } from "./dispute-reported-to-admin.builder";

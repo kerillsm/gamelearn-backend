@@ -10,6 +10,7 @@ import { CancelPendingSessionPackageService } from "../../services/in/cancel-pen
 import { ApproveSessionPackageService } from "../../services/in/approve-session-package.service";
 import { RejectSessionPackageService } from "../../services/in/reject-session-package.service";
 import { CancelSessionPackageService } from "../../services/in/cancel-session-package.service/cancel-session-package.service";
+import { CreateDisputeService } from "../../services/in/create-dispute.service";
 
 export class SessionPackageController {
   @AuthRequired()
@@ -182,6 +183,27 @@ export class SessionPackageController {
       sessionPackageId,
       user.id,
       reason,
+    );
+
+    ctx.status = 200;
+    ctx.body = { sessionPackage };
+  }
+
+  @AuthRequired()
+  @Validate(
+    Joi.object({
+      reason: Joi.string().trim().min(1).required(),
+    }),
+  )
+  static async createDisputeSessionPackage(ctx: Context) {
+    const user = ctx.state.user;
+    const { sessionPackageId } = ctx.params as { sessionPackageId: string };
+    const { reason } = ctx.request.body as { reason: string };
+
+    const sessionPackage = await CreateDisputeService.execute(
+      sessionPackageId,
+      user.id,
+      reason.trim(),
     );
 
     ctx.status = 200;
