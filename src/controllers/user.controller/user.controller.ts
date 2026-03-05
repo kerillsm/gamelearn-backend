@@ -6,19 +6,18 @@ import { Validate } from "../../lib/decorators/validate.decorator";
 import Joi from "joi";
 import { UpdateUserService } from "../../services/in/update-user.service";
 import { AcceptTermsService } from "../../services/in/accept-terms.service";
+import { serializeUser } from "../../lib/serialization";
 
 export class UserController {
   @AuthRequired()
   static async getCurrentUser(ctx: Context) {
     const user = ctx.state.user!;
-
     const userDetails = await UserService.getByEmail(user.email);
     if (!userDetails) {
       throw new HttpError(404, "User not found");
     }
-    const { emailVerificationToken: _token, ...userForClient } = userDetails;
     ctx.status = 200;
-    ctx.body = { user: userForClient };
+    ctx.body = { user: await serializeUser(userDetails, String(user.id)) };
   }
 
   @AuthRequired()
@@ -32,7 +31,6 @@ export class UserController {
   )
   static async updateCurrentUser(ctx: Context) {
     const user = ctx.state.user!;
-
     const updatedUser = await UpdateUserService.updateUser(
       user.id,
       ctx.request.body as {
@@ -42,9 +40,8 @@ export class UserController {
         timezone?: string;
       },
     );
-    const { emailVerificationToken: _t, ...userForClient } = updatedUser;
     ctx.status = 200;
-    ctx.body = { user: userForClient };
+    ctx.body = { user: await serializeUser(updatedUser, String(user.id)) };
   }
 
   @AuthRequired()

@@ -11,6 +11,7 @@ import { ApproveSessionPackageService } from "../../services/in/approve-session-
 import { RejectSessionPackageService } from "../../services/in/reject-session-package.service";
 import { CancelSessionPackageService } from "../../services/in/cancel-session-package.service/cancel-session-package.service";
 import { CreateDisputeService } from "../../services/in/create-dispute.service";
+import { serializeSessionPackage } from "../../lib/serialization";
 
 export class SessionPackageController {
   @AuthRequired()
@@ -23,9 +24,15 @@ export class SessionPackageController {
       page ? parseInt(page, 10) : 1,
       status,
     );
-
     ctx.status = 200;
-    ctx.body = result;
+    ctx.body = {
+      ...result,
+      sessionPackages: await Promise.all(
+        result.sessionPackages.map((pkg) =>
+          serializeSessionPackage(pkg, String(user.id)),
+        ),
+      ),
+    };
   }
 
   @AuthRequired([UserRole.MENTOR])
@@ -47,9 +54,15 @@ export class SessionPackageController {
       monthIndex ? parseInt(monthIndex, 10) : undefined,
       all === "true",
     );
-
     ctx.status = 200;
-    ctx.body = result;
+    ctx.body = {
+      ...result,
+      sessionPackages: await Promise.all(
+        result.sessionPackages.map((pkg) =>
+          serializeSessionPackage(pkg, String(user.id)),
+        ),
+      ),
+    };
   }
 
   @AuthRequired()
@@ -89,7 +102,10 @@ export class SessionPackageController {
 
     ctx.status = 201;
     ctx.body = {
-      sessionPackage: result.sessionPackage,
+      sessionPackage: await serializeSessionPackage(
+        result.sessionPackage,
+        String(user.id),
+      ),
       checkoutUrl: result.checkoutUrl,
     };
   }
@@ -142,9 +158,12 @@ export class SessionPackageController {
       user.id,
       venue,
     );
-
     ctx.status = 200;
-    ctx.body = { sessionPackage };
+    ctx.body = {
+      sessionPackage: sessionPackage
+        ? await serializeSessionPackage(sessionPackage, String(user.id))
+        : null,
+    };
   }
 
   @AuthRequired([UserRole.MENTOR])
@@ -163,9 +182,12 @@ export class SessionPackageController {
       user.id,
       reason,
     );
-
     ctx.status = 200;
-    ctx.body = { sessionPackage };
+    ctx.body = {
+      sessionPackage: sessionPackage
+        ? await serializeSessionPackage(sessionPackage, String(user.id))
+        : null,
+    };
   }
 
   @AuthRequired()
@@ -184,9 +206,12 @@ export class SessionPackageController {
       user.id,
       reason,
     );
-
     ctx.status = 200;
-    ctx.body = { sessionPackage };
+    ctx.body = {
+      sessionPackage: sessionPackage
+        ? await serializeSessionPackage(sessionPackage, String(user.id))
+        : null,
+    };
   }
 
   @AuthRequired()
@@ -205,8 +230,11 @@ export class SessionPackageController {
       user.id,
       reason.trim(),
     );
-
     ctx.status = 200;
-    ctx.body = { sessionPackage };
+    ctx.body = {
+      sessionPackage: sessionPackage
+        ? await serializeSessionPackage(sessionPackage, String(user.id))
+        : null,
+    };
   }
 }

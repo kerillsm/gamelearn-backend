@@ -7,6 +7,7 @@ import { GetUserTestimonialBySlugService } from "../../services/in/get-user-test
 import { UpsertTestimonialService } from "../../services/in/upsert-testimonial.service";
 import { TestimonialService } from "../../services/out/testimonial.service";
 import { GetMentorTestimonialsBySlugService } from "../../services/in/get-mentor-testimonials-by-slug.service";
+import { serializeTestimonial } from "../../lib/serialization";
 
 export class TestimonialController {
   @AuthRequired()
@@ -28,7 +29,11 @@ export class TestimonialController {
       slug,
     );
     ctx.status = 200;
-    ctx.body = { testimonial };
+    ctx.body = {
+      testimonial: testimonial
+        ? await serializeTestimonial(testimonial, String(userId))
+        : null,
+    };
   }
 
   @AuthRequired()
@@ -53,7 +58,9 @@ export class TestimonialController {
     );
 
     ctx.status = 200;
-    ctx.body = { testimonial };
+    ctx.body = {
+      testimonial: await serializeTestimonial(testimonial, String(userId)),
+    };
   }
 
   @AuthRequired()
@@ -61,16 +68,22 @@ export class TestimonialController {
     const userId = ctx.state.user.id!;
     const testimonials =
       await TestimonialService.getTestimonialsGivenByUser(userId);
-
     ctx.status = 200;
-    ctx.body = { testimonials };
+    ctx.body = {
+      testimonials: await Promise.all(
+        testimonials.map((t) => serializeTestimonial(t, String(userId))),
+      ),
+    };
   }
 
   static async getLatestTestimonials(ctx: Context) {
     const testimonials = await TestimonialService.getLatestTestimonials();
-
     ctx.status = 200;
-    ctx.body = { testimonials };
+    ctx.body = {
+      testimonials: await Promise.all(
+        testimonials.map((t) => serializeTestimonial(t, undefined)),
+      ),
+    };
   }
 
   static async getMentorTestimonials(ctx: Context) {
@@ -81,6 +94,12 @@ export class TestimonialController {
       await GetMentorTestimonialsBySlugService.execute(slug, take);
 
     ctx.status = 200;
-    ctx.body = { testimonials, count, average };
+    ctx.body = {
+      testimonials: await Promise.all(
+        testimonials.map((t) => serializeTestimonial(t, undefined)),
+      ),
+      count,
+      average,
+    };
   }
 }

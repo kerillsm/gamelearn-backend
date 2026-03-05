@@ -6,6 +6,7 @@ import { ApproveMentorApplicationService } from "../../services/in/approve-mento
 import { RejectMentorApplicationService } from "../../services/in/reject-mentor-application.service";
 import { Validate } from "../../lib/decorators/validate.decorator";
 import { HttpError } from "../../lib/formatters/httpError";
+import { serializeUser } from "../../lib/serialization";
 
 export class AdminMentorApplicationController {
   static async list(ctx: Context) {
@@ -24,7 +25,15 @@ export class AdminMentorApplicationController {
     const { applications, totalCount } =
       await ListMentorApplicationsService.execute({ page, take, status });
     ctx.status = 200;
-    ctx.body = { applications, totalCount };
+    ctx.body = {
+      applications: await Promise.all(
+        applications.map(async (app) => ({
+          ...app,
+          user: await serializeUser(app.user, app.user.id),
+        })),
+      ),
+      totalCount,
+    };
   }
 
   @Validate(Joi.object({ slug: Joi.string().required().min(1) }))
@@ -38,8 +47,16 @@ export class AdminMentorApplicationController {
       id,
       body.slug.trim(),
     );
+    if (!application) {
+      throw new HttpError(404, "Application not found");
+    }
     ctx.status = 200;
-    ctx.body = { application };
+    ctx.body = {
+      application: {
+        ...application,
+        user: await serializeUser(application.user, application.user.id),
+      },
+    };
   }
 
   @Validate(Joi.object({ rejectionReason: Joi.string().required() }))

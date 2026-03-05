@@ -105,8 +105,7 @@ export class BookSessionPackageService {
     );
 
     const firstSessionStartAt = validatedSlots.reduce(
-      (min, slot) =>
-        slot.scheduledAt < min ? slot.scheduledAt : min,
+      (min, slot) => (slot.scheduledAt < min ? slot.scheduledAt : min),
       validatedSlots[0].scheduledAt,
     );
     const lastSessionEndAt = validatedSlots.reduce(
@@ -116,9 +115,7 @@ export class BookSessionPackageService {
         );
         return endAt > max ? endAt : max;
       },
-      new Date(
-        validatedSlots[0].scheduledAt.getTime() + duration * 60 * 1000,
-      ),
+      new Date(validatedSlots[0].scheduledAt.getTime() + duration * 60 * 1000),
     );
 
     let sessionPackage = await SessionPackageService.create({
