@@ -28,7 +28,11 @@ export class UpdateUserService {
       timezone: profileData.timezone ?? user.timezone,
     };
 
-    if (profileData.email !== undefined && profileData.email !== user.email) {
+    if (
+      profileData.email !== undefined &&
+      // If email is changed or user is not verified, send verification email
+      (profileData.email !== user.email || !user.emailVerified)
+    ) {
       const existingByEmail = await UserService.getByEmail(profileData.email);
       if (existingByEmail && existingByEmail.id !== userId) {
         throw new HttpError(400, "Email already in use");
