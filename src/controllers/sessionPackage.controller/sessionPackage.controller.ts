@@ -1,9 +1,9 @@
 import Joi from "joi";
+import { SessionPackageType, UserRole } from "@prisma/client";
 import { AuthRequired } from "../../lib/decorators/authRequired.decorator";
 import { Validate } from "../../lib/decorators/validate.decorator";
 import { Context } from "koa";
 import { BookSessionPackageService } from "../../services/in/book-session-package.service";
-import { SessionPackageType } from "@prisma/client";
 import { GetUserVibeCheckSessionService } from "../../services/in/get-user-vibe-check-session.service";
 import { ListSessionPackagesService } from "../../services/in/list-session-packages.service";
 import { CancelPendingSessionPackageService } from "../../services/in/cancel-pending-session-package.service";
@@ -28,7 +28,7 @@ export class SessionPackageController {
     ctx.body = result;
   }
 
-  @AuthRequired()
+  @AuthRequired([UserRole.MENTOR])
   static async getMentorSessionPackages(ctx: Context) {
     const user = ctx.state.user;
     const { page, status, year, monthIndex, all } = ctx.query as {
@@ -108,7 +108,7 @@ export class SessionPackageController {
     ctx.body = result;
   }
 
-  @AuthRequired()
+  @AuthRequired([UserRole.USER])
   @Validate(
     Joi.object({
       sessionPackageId: Joi.string().uuid().required(),
@@ -126,7 +126,7 @@ export class SessionPackageController {
     ctx.body = { deleted: true };
   }
 
-  @AuthRequired()
+  @AuthRequired([UserRole.MENTOR])
   @Validate(
     Joi.object({
       venue: Joi.string().required(),
@@ -147,7 +147,7 @@ export class SessionPackageController {
     ctx.body = { sessionPackage };
   }
 
-  @AuthRequired()
+  @AuthRequired([UserRole.MENTOR])
   @Validate(
     Joi.object({
       reason: Joi.string().optional(),

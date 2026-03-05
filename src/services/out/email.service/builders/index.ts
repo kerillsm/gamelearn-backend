@@ -9,3 +9,4 @@ export {
   buildMentorCanceledSessionPackageEmail,
 } from "./session-package-cancellation.builder";
 export { buildDisputeReportedToAdminEmail } from "./dispute-reported-to-admin.builder";
+export { buildEmailVerificationEmail } from "./email-verification.builder";

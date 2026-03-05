@@ -66,6 +66,8 @@ router.get(
   AuthController.authorize,
 );
 
+router.get("/verify-email", AuthController.verifyEmail);
+
 router.post("/refresh", AuthController.refreshToken);
 
 router.post("/logout", AuthController.logOut);

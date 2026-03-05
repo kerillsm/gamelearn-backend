@@ -16,15 +16,16 @@ export class UserController {
     if (!userDetails) {
       throw new HttpError(404, "User not found");
     }
-
+    const { emailVerificationToken: _token, ...userForClient } = userDetails;
     ctx.status = 200;
-    ctx.body = { user: userDetails };
+    ctx.body = { user: userForClient };
   }
 
   @AuthRequired()
   @Validate(
     Joi.object({
       name: Joi.string().optional(),
+      email: Joi.string().email().optional(),
       picture: Joi.string().uri().optional(),
       timezone: Joi.string().optional(),
     }),
@@ -36,13 +37,14 @@ export class UserController {
       user.id,
       ctx.request.body as {
         name?: string;
+        email?: string;
         picture?: string;
         timezone?: string;
       },
     );
-
+    const { emailVerificationToken: _t, ...userForClient } = updatedUser;
     ctx.status = 200;
-    ctx.body = { user: updatedUser };
+    ctx.body = { user: userForClient };
   }
 
   @AuthRequired()

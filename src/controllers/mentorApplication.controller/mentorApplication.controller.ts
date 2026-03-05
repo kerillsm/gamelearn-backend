@@ -3,10 +3,10 @@ import { AuthRequired } from "../../lib/decorators/authRequired.decorator";
 import { Validate } from "../../lib/decorators/validate.decorator";
 import Joi from "joi";
 import { CreateMentorApplicationService } from "../../services/in/create-mentor-application.service";
-import { MentorGame } from "@prisma/client";
+import { MentorGame, UserRole } from "@prisma/client";
 
 export class MentorApplicationController {
-  @AuthRequired()
+  @AuthRequired([UserRole.USER])
   @Validate(
     Joi.object({
       name: Joi.string().required(),

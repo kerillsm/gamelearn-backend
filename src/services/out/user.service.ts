@@ -26,6 +26,12 @@ export class UserService {
     });
   }
 
+  static getByEmailVerificationToken(token: string) {
+    return prisma.user.findFirst({
+      where: { emailVerificationToken: token },
+    });
+  }
+
   static async createUser(data: Prisma.UserCreateInput) {
     return prisma.user.create({
       data,

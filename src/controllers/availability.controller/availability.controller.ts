@@ -10,13 +10,13 @@ import { GetAvailabilityRulesService } from "../../services/in/get-availability-
 import { AddAvailabilityExceptionService } from "../../services/in/add-availability-exception.service";
 import { GetAvailabilityExceptionsService } from "../../services/in/get-availability-exceptions.service";
 import { AvailabilityService } from "../../services/out/availability.service/availability.service";
-import { SessionPackageType } from "@prisma/client";
+import { SessionPackageType, UserRole } from "@prisma/client";
 import { HttpError } from "../../lib/formatters/httpError";
 import { GetAvailableMentorDates } from "../../services/in/get-available-mentor-dates.service";
 import { GetMentorAvailableTimes } from "../../services/in/get-mentor-available-times.service";
 
 export class AvailabilityController {
-  @AuthRequired()
+  @AuthRequired([UserRole.MENTOR])
   @Validate(
     Joi.object({
       rules: Joi.array().items(
@@ -48,7 +48,7 @@ export class AvailabilityController {
     ctx.body = { message: "Availability rules updated successfully" };
   }
 
-  @AuthRequired()
+  @AuthRequired([UserRole.MENTOR])
   static async getAvailabilityRules(ctx: Context) {
     const userId = ctx.state.user.id;
     const rules =
@@ -57,7 +57,7 @@ export class AvailabilityController {
     ctx.body = { rules };
   }
 
-  @AuthRequired()
+  @AuthRequired([UserRole.MENTOR])
   @Validate(
     Joi.object({
       exception: Joi.object({
@@ -90,7 +90,7 @@ export class AvailabilityController {
     ctx.body = { message: "Availability exception added successfully" };
   }
 
-  @AuthRequired()
+  @AuthRequired([UserRole.MENTOR])
   static async getAvailabilityExceptions(ctx: Context) {
     const userId = ctx.state.user.id;
     const exceptions =
@@ -100,7 +100,7 @@ export class AvailabilityController {
     ctx.body = { exceptions };
   }
 
-  @AuthRequired()
+  @AuthRequired([UserRole.MENTOR])
   static async removeAvailabilityException(ctx: Context) {
     const userId = ctx.state.user.id;
     const { exceptionId } = ctx.params as { exceptionId?: string };

@@ -8,6 +8,7 @@ import {
 } from "../../services/in/get-or-create-user-by-auth-provider.service";
 import { RefreshTokenService } from "../../services/in/refresh-token-service";
 import { AuthorizeService } from "../../services/in/authorize-user.service";
+import { VerifyEmailService } from "../../services/in/verify-email.service/verify-email.service";
 
 export class AuthController {
   static getOrCreateUser = async (data: GetOrCreateUserByAuthProviderDTO) => {
@@ -78,5 +79,21 @@ export class AuthController {
     });
     ctx.status = 200;
     ctx.body = { success: true };
+  }
+
+  static async verifyEmail(ctx: Context) {
+    const token = (ctx.query.token as string) || "";
+    try {
+      const result = await VerifyEmailService.execute(token);
+      ctx.status = 200;
+      ctx.body = result;
+    } catch (err: unknown) {
+      if (err instanceof HttpError) {
+        ctx.status = err.status;
+        ctx.body = { success: false, error: err.message };
+        return;
+      }
+      throw err;
+    }
   }
 }
