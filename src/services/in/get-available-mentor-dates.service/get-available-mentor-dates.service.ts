@@ -25,7 +25,11 @@ export class GetAvailableMentorDates {
       throw new Error("Invalid year or month");
     }
 
-    const userToday = DateTime.now().setZone(user.timezone).startOf("day");
+    // Use UTC "now" then convert to user zone so "today" is correct at midnight
+    // (DateTime.now() uses server zone and can be off by one day at 00:00 user time)
+    const userToday = DateTime.utc()
+      .setZone(user.timezone)
+      .startOf("day");
     const isCurrentMonth =
       userToday.year === year && userToday.month === month;
     const startDay = isCurrentMonth

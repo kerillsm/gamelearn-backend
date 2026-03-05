@@ -28,7 +28,9 @@ export class MentorAvailabilityService {
       day: lDate,
       rules,
       exceptions: exceptions.filter((ex) =>
-        DateTime.fromJSDate(ex.date).hasSame(lDate, "day"),
+        DateTime.fromJSDate(ex.date)
+          .setZone(userTimezone)
+          .hasSame(lDate, "day"),
       ),
       bookings,
       sessionType,
