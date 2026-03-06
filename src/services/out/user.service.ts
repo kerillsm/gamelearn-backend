@@ -44,4 +44,10 @@ export class UserService {
       data: profileData,
     });
   }
+
+  static async deleteUser(userId: string) {
+    return prisma.user.delete({
+      where: { id: userId },
+    });
+  }
 }

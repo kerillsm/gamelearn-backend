@@ -40,4 +40,11 @@ router.post(
   AdminMentorProfileController.reject,
 );
 
+router.post(
+  "/:id/remove",
+  authMiddleware,
+  adminMiddleware,
+  AdminMentorProfileController.remove,
+);
+
 export { router as adminMentorProfileRoutes };

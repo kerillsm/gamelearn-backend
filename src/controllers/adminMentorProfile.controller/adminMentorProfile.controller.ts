@@ -6,6 +6,7 @@ import { ListPendingProfilesService } from "../../services/in/list-pending-profi
 import { ApproveMentorProfileService } from "../../services/in/approve-mentor-profile.service";
 import { RejectMentorProfileService } from "../../services/in/reject-mentor-profile.service";
 import { CreateMockProfileService } from "../../services/in/create-mock-profile.service";
+import { RemoveMentorProfileService } from "../../services/in/remove-mentor-profile.service";
 import { Validate } from "../../lib/decorators/validate.decorator";
 import { HttpError } from "../../lib/formatters/httpError";
 
@@ -78,5 +79,17 @@ export class AdminMentorProfileController {
     );
     ctx.status = 200;
     ctx.body = { mentorProfile };
+  }
+
+  @Validate(Joi.object({ reason: Joi.string().allow("").optional() }))
+  static async remove(ctx: Context) {
+    const id = ctx.params.id;
+    if (!id) {
+      throw new HttpError(400, "Profile id is required");
+    }
+    const body = (ctx.request.body as { reason?: string }) ?? {};
+    await RemoveMentorProfileService.execute(id, body.reason?.trim() || undefined);
+    ctx.status = 200;
+    ctx.body = { success: true };
   }
 }

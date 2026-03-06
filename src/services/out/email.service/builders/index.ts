@@ -10,4 +10,5 @@ export {
 } from "./session-package-cancellation.builder";
 export { buildDisputeReportedToAdminEmail } from "./dispute-reported-to-admin.builder";
 export { buildEmailVerificationEmail } from "./email-verification.builder";
+export { buildMentorProfileRemovedEmail } from "./mentor-profile-removed.builder";
 export { buildNewsletterEmail } from "./newsletter.builder";
