@@ -1,9 +1,11 @@
 import Joi from "joi";
 import { Context } from "koa";
+import { MentorGame } from "@prisma/client";
 import { ListAllProfilesService } from "../../services/in/list-all-profiles.service";
 import { ListPendingProfilesService } from "../../services/in/list-pending-profiles.service";
 import { ApproveMentorProfileService } from "../../services/in/approve-mentor-profile.service";
 import { RejectMentorProfileService } from "../../services/in/reject-mentor-profile.service";
+import { CreateMockProfileService } from "../../services/in/create-mock-profile.service";
 import { Validate } from "../../lib/decorators/validate.decorator";
 import { HttpError } from "../../lib/formatters/httpError";
 
@@ -26,6 +28,31 @@ export class AdminMentorProfileController {
     const { mentorProfiles } = await ListPendingProfilesService.execute();
     ctx.status = 200;
     ctx.body = { mentorProfiles };
+  }
+
+  @Validate(
+    Joi.object({
+      slug: Joi.string().required(),
+      name: Joi.string().required(),
+      description: Joi.string().required(),
+      shortDescription: Joi.string().required(),
+      imageUrl: Joi.string().uri().required(),
+      game: Joi.string()
+        .valid(...Object.values(MentorGame))
+        .required(),
+      tags: Joi.array().items(Joi.string()).required(),
+      gameRating: Joi.number().optional().allow(null),
+      price: Joi.number().required().min(0),
+      videoUrl: Joi.string().uri().optional().allow(null),
+    }),
+  )
+  static async createMockProfile(ctx: Context) {
+    const body = ctx.request.body as Parameters<
+      typeof CreateMockProfileService.execute
+    >[0];
+    const mentorProfile = await CreateMockProfileService.execute(body);
+    ctx.status = 200;
+    ctx.body = { mentorProfile };
   }
 
   static async approve(ctx: Context) {

@@ -65,7 +65,7 @@ export class MentorProfileService {
     const mentorProfiles = await prisma.mentorProfile.findMany({
       skip: (page - 1) * take,
       take,
-      include: { user: { select: { slug: true } } },
+      include: { user: { select: { slug: true, email: true } } },
     });
     const totalCount = await prisma.mentorProfile.count();
     return { mentorProfiles, totalCount };

@@ -20,6 +20,13 @@ router.get(
 );
 
 router.post(
+  "/create-mock",
+  authMiddleware,
+  adminMiddleware,
+  AdminMentorProfileController.createMockProfile,
+);
+
+router.post(
   "/:id/approve",
   authMiddleware,
   adminMiddleware,
