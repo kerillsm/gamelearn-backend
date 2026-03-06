@@ -24,6 +24,7 @@ import { mentorApplicationRoutes } from "./routes/mentorApplication.routes";
 import { testimonialRoutes } from "./routes/testimonial.routes";
 import { adminMentorProfileRoutes } from "./routes/adminMentorProfile.routes";
 import { adminMentorApplicationRoutes } from "./routes/adminMentorApplication.routes";
+import { newsletterRoutes } from "./routes/newsletter.routes";
 import { AutoCompleteApprovedSessionsService } from "./services/in/auto-complete-approved-sessions.service";
 import { AutoRejectExpiredPackagesService } from "./services/in/auto-reject-expired-packages.service";
 import { ReleasePaymentService } from "./services/in/release-payment.service";
@@ -105,6 +106,11 @@ router.use(
   "/admin/mentor-applications",
   adminMentorApplicationRoutes.routes(),
   adminMentorApplicationRoutes.allowedMethods(),
+);
+router.use(
+  "/newsletter",
+  newsletterRoutes.routes(),
+  newsletterRoutes.allowedMethods(),
 );
 
 app.use(router.routes()).use(router.allowedMethods());

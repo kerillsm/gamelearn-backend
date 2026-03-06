@@ -37,6 +37,7 @@ model User {
   testimonialsGiven  Testimonial[]  @relation("UserTestimonialsGiven")
   testimonialsReceived Testimonial[] @relation("MentorTestimonialsReceived")
   payoutSplits PayoutSplit[]
+  newsletterSubscription NewsletterSubscription?
 }
 
 enum StripeConnectStatus {
@@ -50,6 +51,23 @@ enum UserRole {
   USER
   MENTOR
   ADMIN
+}
+
+model NewsletterSubscription {
+  id               String    @id @default(uuid())
+  email            String    @unique
+  consentedAt      DateTime  @db.Timestamptz
+  unsubscribeToken String    @unique
+  userId           String?
+  source           String?
+  ipAddress        String?
+  userAgent        String?
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@unique([userId])
+  @@index([email])
+  @@index([unsubscribeToken])
 }
 
 model AuthAccount {
