@@ -1,10 +1,15 @@
 import { SplitRole } from "@prisma/client";
 import { prisma } from "../../../lib/orm/prisma";
 import { PayoutSplitService } from "../../out/payout-split.service";
+import { ReleasePaymentAttemptService } from "../../out/release-payment-attempt.service";
 import { StripeService } from "../../out/stripe.service";
 import { UserService } from "../../out/user.service";
 import type { ReleasePaymentResult } from "./types";
-import { buildIdempotencyKey, groupSplitsByUserAndCurrency } from "./utils";
+import {
+  buildSplitGroupKey,
+  buildStripeIdempotencyKey,
+} from "./utils/idempotency-key";
+import { groupSplitsByUserAndCurrency } from "./utils/groupSplitsByUserAndCurrency";
 
 const PAYEE_ROLES = [
   SplitRole.MENTOR,
@@ -53,7 +58,13 @@ export class ReleasePaymentService {
         continue;
       }
 
-      const idempotencyKey = buildIdempotencyKey(group.splitIds);
+      const groupKey = buildSplitGroupKey(group.splitIds);
+      const attemptNumber =
+        await ReleasePaymentAttemptService.getAttemptNumber(groupKey);
+      const stripeIdempotencyKey = buildStripeIdempotencyKey(
+        groupKey,
+        attemptNumber,
+      );
       let stripeTransferId: string;
 
       try {
@@ -64,11 +75,12 @@ export class ReleasePaymentService {
             payoutType: group.role,
             userId: group.userId,
           },
-          { currency: group.currency, idempotencyKey },
+          { currency: group.currency, idempotencyKey: stripeIdempotencyKey },
         );
         stripeTransferId = transfer.id;
       } catch (err) {
         console.log("err", err);
+        await ReleasePaymentAttemptService.incrementAttempt(groupKey);
         const message = err instanceof Error ? err.message : String(err);
         result.errors.push(
           `ReleasePayment: Stripe transfer failed for user ${group.userId} (${group.role}): ${message}`,
@@ -89,6 +101,7 @@ export class ReleasePaymentService {
             tx as typeof prisma,
           );
         });
+        await ReleasePaymentAttemptService.deleteAttempt(groupKey);
         result.payoutsCreated += 1;
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);

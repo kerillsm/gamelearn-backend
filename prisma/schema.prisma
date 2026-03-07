@@ -410,6 +410,12 @@ model PayoutSplit {
   stripeTransferId String? @unique
 }
 
+model ReleasePaymentAttempt {
+  groupKey      String   @id // hash(sort(splitIds))
+  attemptNumber Int      @default(0)
+  updatedAt     DateTime @updatedAt
+}
+
 model PaymentProcessingLock {
   id             String   @id @default(uuid())
   stripeEventId  String   @unique
