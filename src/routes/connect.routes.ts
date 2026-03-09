@@ -7,7 +7,6 @@ const router = new Router();
 
 router.post("/onboard", authMiddleware, ConnectController.startOnboarding);
 router.get("/status", authMiddleware, ConnectController.getStatus);
-router.get("/dashboard", authMiddleware, ConnectController.getDashboardLink);
 router.get("/earnings", authMiddleware, ConnectController.getEarnings);
 router.post(
   "/platform-payout",
