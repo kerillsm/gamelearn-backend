@@ -19,7 +19,7 @@ import { availabilityRoutes } from "./routes/availability.routes";
 import { sessionPackageRoutes } from "./routes/sessionPackage.routes";
 import { paymentRoutes } from "./routes/payment.routes";
 import { referralRoutes } from "./routes/referral.routes";
-import { connectRoutes } from "./routes/connect.routes";
+import { financeRoutes } from "./routes/finance.routes";
 import { mentorApplicationRoutes } from "./routes/mentorApplication.routes";
 import { testimonialRoutes } from "./routes/testimonial.routes";
 import { adminMentorProfileRoutes } from "./routes/adminMentorProfile.routes";
@@ -86,7 +86,7 @@ router.use(
   referralRoutes.routes(),
   referralRoutes.allowedMethods(),
 );
-router.use("/connect", connectRoutes.routes(), connectRoutes.allowedMethods());
+router.use("/finance", financeRoutes.routes(), financeRoutes.allowedMethods());
 router.use(
   "/mentor-application",
   mentorApplicationRoutes.routes(),
