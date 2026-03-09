@@ -26,8 +26,8 @@ export class ApproveSessionPackageService {
     }
 
     const mentor = await UserService.getById(mentorUserId);
-    if (mentor?.stripeConnectStatus !== StripeConnectStatus.ACTIVE) {
-      throw new HttpError(400, "Set up your payout account to accept bookings");
+    if (!mentor) {
+      throw new HttpError(400, "Mentor not found");
     }
 
     if (sessionPackage.status !== SessionPackStatus.PAYED) {
@@ -64,9 +64,8 @@ export class ApproveSessionPackageService {
       await SessionService.updateSession(session.id, { status: "APPROVED" });
     }
 
-    const updatedPackage = await SessionPackageService.getByIdWithSessions(
-      sessionPackageId,
-    );
+    const updatedPackage =
+      await SessionPackageService.getByIdWithSessions(sessionPackageId);
 
     // Send approval confirmation email to the applicant
     if (updatedPackage) {
@@ -80,9 +79,7 @@ export class ApproveSessionPackageService {
             venue: venue.trim(),
           }),
         );
-        console.log(
-          `Approval confirmation email sent to ${applicant.email}`,
-        );
+        console.log(`Approval confirmation email sent to ${applicant.email}`);
       } catch (error) {
         console.error("Failed to send approval confirmation email:", error);
         // Don't throw - email failure should not break the approval flow

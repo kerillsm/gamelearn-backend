@@ -43,20 +43,6 @@ export class BookSessionPackageService {
     }
 
     const isFreeSession = PricingService.isFreeSession(data.sessionType);
-    if (!isFreeSession) {
-      if (mentorUser.stripeConnectStatus !== StripeConnectStatus.ACTIVE) {
-        throw new HttpError(
-          400,
-          "This mentor is not yet available for booking. Please try again later.",
-        );
-      }
-      if (!mentorUser.stripeConnectAccountId) {
-        throw new HttpError(
-          400,
-          "This mentor is not yet available for booking. Please try again later.",
-        );
-      }
-    }
 
     const mentorCompletedSessions =
       await SessionService.countCompletedSessionsByMentor(mentorProfile.userId);
