@@ -10,6 +10,7 @@ import {
   getPayoutSplitBalance,
   getPayoutSplitTotalByRoles,
   getEarningsWaitingSessionCompletion,
+  getPlatformAvailableForWithdrawalCents,
 } from "./utils";
 
 export class EarningsService {
@@ -71,6 +72,7 @@ export class EarningsService {
         totalReferral,
         stripeFee,
         waiting,
+        platformAvailableCents,
       ] = await Promise.all([
         getPayoutSplitTotalByRoles([SplitRole.PLATFORM]),
         getPayoutSplitTotalByRoles([SplitRole.MENTOR]),
@@ -80,6 +82,7 @@ export class EarningsService {
         ]),
         getPayoutSplitTotalByRoles([SplitRole.STRIPE_FEE]),
         getEarningsWaitingSessionCompletion(),
+        getPlatformAvailableForWithdrawalCents(),
       ]);
 
       result.platformEarnings = centsToDollars(platform.balanceCents);
@@ -123,6 +126,9 @@ export class EarningsService {
       );
       result.platformEarningsWaitingCompletion = centsToDollars(
         waiting.platformCents,
+      );
+      result.platformAvailableForWithdrawal = centsToDollars(
+        platformAvailableCents,
       );
     }
 

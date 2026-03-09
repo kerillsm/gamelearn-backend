@@ -44,6 +44,9 @@ export interface EarningsSummaryDto {
   mentorEarningsWaitingCompletion?: number;
   referralEarningsWaitingCompletion?: number;
   platformEarningsWaitingCompletion?: number;
+
+  /** Admin: available for platform withdrawal = PENDING (PLATFORM) + (PAID (PLATFORM) - sum(Payout)). */
+  platformAvailableForWithdrawal?: number;
 }
 
 export interface GetEarningsForUserParams {

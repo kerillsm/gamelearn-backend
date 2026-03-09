@@ -1,8 +1,10 @@
+import Stripe from "stripe";
 import { Context } from "koa";
 import { StripeService } from "../../services/out/stripe.service";
 import { HandleCheckoutCompletedService } from "../../services/in/handle-checkout-completed.service";
 import { HandleCheckoutExpiredService } from "../../services/in/handle-checkout-expired.service";
 import { HandleConnectAccountUpdatedService } from "../../services/in/handle-connect-account-updated.service";
+import { HandlePayoutService } from "../../services/in/handle-payout.service";
 import { HttpError } from "../../lib/formatters/httpError";
 
 export class PaymentController {
@@ -50,6 +52,17 @@ export class PaymentController {
           const account = event.data.object;
           await HandleConnectAccountUpdatedService.execute(account.id);
         }
+        break;
+      }
+      case "payout.paid":
+      case "payout.failed":
+      case "payout.canceled": {
+        const payout = event.data.object as Stripe.Payout;
+        const accountId =
+          typeof (event as Stripe.Event).account === "string"
+            ? (event as Stripe.Event).account
+            : undefined;
+        await HandlePayoutService.execute(payout, accountId);
         break;
       }
       default:

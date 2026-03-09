@@ -157,6 +157,16 @@ export class StripeService {
     });
   }
 
+  /**
+   * Create a payout from platform balance to platform bank account.
+   */
+  static async createPayout(amountCents: number, currency: string = "usd") {
+    return stripe.payouts.create({
+      amount: amountCents,
+      currency: currency.toLowerCase(),
+    });
+  }
+
   // --- Payment capture: fetch PaymentIntent, Charge, BalanceTransaction for fee/net ---
 
   static async getPaymentIntent(

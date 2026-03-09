@@ -37,6 +37,7 @@ model User {
   testimonialsGiven  Testimonial[]  @relation("UserTestimonialsGiven")
   testimonialsReceived Testimonial[] @relation("MentorTestimonialsReceived")
   payoutSplits PayoutSplit[]
+  payouts      Payout[]
   newsletterSubscription NewsletterSubscription?
 }
 
@@ -408,6 +409,45 @@ model PayoutSplit {
   status    SplitStatus @default(PENDING)
 
   stripeTransferId String? @unique
+}
+
+enum PayoutOwnerType {
+  PLATFORM
+  CONNECTED_ACCOUNT
+}
+
+enum PayoutStatus {
+  PENDING
+  IN_TRANSIT
+  PAID
+  FAILED
+  CANCELED
+}
+
+model Payout {
+  id String @id @default(uuid())
+
+  ownerType PayoutOwnerType
+
+  // null для platform payout
+  userId String?
+  user   User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // null для platform payout
+  stripeAccountId String?
+
+  stripePayoutId String @unique
+
+  amountCents Int
+  currency String
+  status PayoutStatus
+
+  arrivalDate DateTime? @db.Timestamptz
+  failureCode String?
+  failureMessage String?
+
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
 }
 
 model ReleasePaymentAttempt {

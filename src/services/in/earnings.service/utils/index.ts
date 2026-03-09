@@ -5,3 +5,4 @@ export {
   type PayoutSplitBalance,
 } from "./payoutSplitBalance";
 export { getEarningsWaitingSessionCompletion } from "./earningsWaitingCompletion";
+export { getPlatformAvailableForWithdrawalCents } from "./platformAvailableForWithdrawal";
