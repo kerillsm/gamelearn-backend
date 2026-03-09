@@ -80,4 +80,38 @@ export class PayoutSplitService {
       data: { stripeTransferId, status: SplitStatus.PAID },
     });
   }
+
+  /**
+   * Sum of amountCents for a user's splits with given roles and status.
+   * Used for balance (available = PAID, pending = PENDING).
+   */
+  static async getSumCentsByUserRolesAndStatus(
+    userId: string,
+    roles: SplitRole[],
+    status: SplitStatus,
+  ): Promise<number> {
+    const result = await prisma.payoutSplit.aggregate({
+      where: {
+        userId,
+        role: { in: roles },
+        status,
+      },
+      _sum: { amountCents: true },
+    });
+    return result._sum?.amountCents ?? 0;
+  }
+
+  /**
+   * Sum of amountCents for splits with given role and status (e.g. PLATFORM, no userId).
+   */
+  static async getSumCentsByRoleAndStatus(
+    role: SplitRole,
+    status: SplitStatus,
+  ): Promise<number> {
+    const result = await prisma.payoutSplit.aggregate({
+      where: { role, status },
+      _sum: { amountCents: true },
+    });
+    return result._sum?.amountCents ?? 0;
+  }
 }

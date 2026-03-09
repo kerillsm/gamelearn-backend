@@ -52,4 +52,22 @@ export class PayoutService {
     });
     return result._sum?.amountCents ?? 0;
   }
+
+  /**
+   * Sum of amountCents for a connected account's payouts (status not FAILED/CANCELED).
+   * Used for user paid-out total in balance.
+   */
+  static async getConnectedAccountPayoutsSumCents(
+    userId: string,
+  ): Promise<number> {
+    const result = await prisma.payout.aggregate({
+      where: {
+        ownerType: PayoutOwnerType.CONNECTED_ACCOUNT,
+        userId,
+        status: { notIn: [PayoutStatus.FAILED, PayoutStatus.CANCELED] },
+      },
+      _sum: { amountCents: true },
+    });
+    return result._sum?.amountCents ?? 0;
+  }
 }
