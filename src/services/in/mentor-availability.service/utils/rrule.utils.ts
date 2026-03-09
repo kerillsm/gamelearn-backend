@@ -3,6 +3,16 @@ import { DateTime } from "luxon";
 
 const rruleCache = new Map<string, RRule>();
 
+const BYDAY_TO_LUXON_WEEKDAY: Record<string, number> = {
+  MO: 1,
+  TU: 2,
+  WE: 3,
+  TH: 4,
+  FR: 5,
+  SA: 6,
+  SU: 7,
+};
+
 export function getCachedRRule(rruleString: string): RRule {
   if (!rruleCache.has(rruleString)) {
     rruleCache.set(rruleString, RRule.fromString(rruleString));
@@ -21,8 +31,19 @@ export function rruleProducesOccurrenceInUserDay({
   dayStart: DateTime;
   dayEnd: DateTime;
 }): boolean {
-  const rrule = getCachedRRule(rruleString);
+  const bydayMatch = rruleString.match(/BYDAY=([A-Z,]+)/);
+  if (bydayMatch) {
+    const bydayValues = bydayMatch[1].split(",");
+    const allowedWeekdays = new Set(
+      bydayValues
+        .map((d) => BYDAY_TO_LUXON_WEEKDAY[d.trim()])
+        .filter((w): w is number => w !== undefined),
+    );
+    const userWeekday = dayStart.weekday;
+    return allowedWeekdays.has(userWeekday);
+  }
 
+  const rrule = getCachedRRule(rruleString);
   const windowStartInRuleTz = dayStart.setZone(ruleTimezone);
   const windowEndInRuleTz = dayEnd.setZone(ruleTimezone);
 

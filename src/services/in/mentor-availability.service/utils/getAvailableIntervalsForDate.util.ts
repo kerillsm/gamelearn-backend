@@ -22,6 +22,7 @@ export function getAvailableIntervalsForDate({
   userTimezone,
   sessionType,
   bookings,
+  nowInUserTz,
 }: {
   day: DateTime;
   rules: AvailabilityRule[];
@@ -29,6 +30,7 @@ export function getAvailableIntervalsForDate({
   bookings: Session[];
   userTimezone: string;
   sessionType: SessionPackageType;
+  nowInUserTz?: DateTime;
 }) {
   let intervals: Interval<true>[] = [];
 
@@ -94,6 +96,22 @@ export function getAvailableIntervalsForDate({
     if (!bookingInterval.isValid) continue;
 
     intervals = subtractInterval(intervals, bookingInterval);
+  }
+
+  // 4. Trim past intervals for "today" so we don't show days whose slots have already passed
+  if (nowInUserTz?.isValid && dayStart.hasSame(nowInUserTz, "day")) {
+    const now = nowInUserTz;
+    intervals = intervals
+      .map((interval) => {
+        if (interval.end <= now) return null;
+        if (interval.start < now) {
+          const trimmed = Interval.fromDateTimes(now, interval.end);
+          return trimmed.isValid ? trimmed : null;
+        }
+        return interval;
+      })
+      .filter((i): i is Interval<true> => i !== null);
+    intervals = mergeIntervals(intervals);
   }
 
   intervals = intervals.filter(

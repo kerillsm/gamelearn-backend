@@ -24,6 +24,8 @@ export class MentorAvailabilityService {
         month: lDate.month,
       });
 
+    const nowInUserTz = DateTime.utc().setZone(userTimezone);
+
     const intervals = getAvailableIntervalsForDate({
       day: lDate,
       rules,
@@ -35,6 +37,7 @@ export class MentorAvailabilityService {
       bookings,
       sessionType,
       userTimezone,
+      nowInUserTz,
     });
 
     return intervals;
