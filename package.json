@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "ts-node-dev src/index.ts",
-    "build": "prisma generate && tsc src/index.ts",
+    "build": "prisma generate && tsc",
     "start": "npx prisma migrate deploy && NODE_ENV=production node dist/index.js"
   },
   "devDependencies": {
