@@ -67,6 +67,21 @@ export class PayoutSplitService {
   }
 
   /**
+   * Cancels all PENDING PayoutSplits for the given session package (e.g. on package rejection).
+   */
+  static async cancelPendingSplitsBySessionPackageId(
+    sessionPackageId: string,
+  ): Promise<void> {
+    await prisma.payoutSplit.updateMany({
+      where: {
+        status: SplitStatus.PENDING,
+        payment: { sessionPackageId },
+      },
+      data: { status: SplitStatus.CANCELLED },
+    });
+  }
+
+  /**
    * Marks the given splits as PAID and sets stripeTransferId.
    */
   static async markSplitsAsPaid(

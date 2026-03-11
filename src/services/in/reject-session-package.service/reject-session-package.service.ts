@@ -5,6 +5,7 @@ import { SessionPackageService } from "../../out/sessionPackage.service";
 import { SessionService } from "../../out/session.service";
 import { UserService } from "../../out/user.service";
 import { StripeService } from "../../out/stripe.service";
+import { PayoutSplitService } from "../../out/payout-split.service";
 import {
   EmailService,
   buildSessionPackageRejectionEmail,
@@ -85,6 +86,10 @@ export class RejectSessionPackageService {
     for (const session of sessionPackage.sessions) {
       await SessionService.updateSession(session.id, { status: "REJECTED" });
     }
+
+    await PayoutSplitService.cancelPendingSplitsBySessionPackageId(
+      sessionPackageId,
+    );
 
     const updatedPackage =
       await SessionPackageService.getByIdWithSessions(sessionPackageId);
