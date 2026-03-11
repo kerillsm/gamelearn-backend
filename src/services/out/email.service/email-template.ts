@@ -2,16 +2,51 @@ import { EmailStyle, EmailStyleConfig } from "./email.types";
 
 const EMAIL_STYLES: Record<EmailStyle, EmailStyleConfig> = {
   default: {
-    gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    headerBg: "#667eea",
+    gradient: `
+      background-color:#ffffff;
+      background-image:
+        radial-gradient(circle at 10% 10%, rgba(124,58,237,0.15), transparent 40%),
+        radial-gradient(circle at 90% 0%, rgba(139,92,246,0.12), transparent 35%),
+        linear-gradient(to right, rgba(124,58,237,0.08) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(124,58,237,0.08) 1px, transparent 1px);
+      background-size:
+        auto,
+        auto,
+        14px 24px,
+        14px 24px;
+    `,
   },
+
   error: {
-    gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-    headerBg: "#f5576c",
+    gradient: `
+      background-color:#fff5f5;
+      background-image:
+        radial-gradient(circle at 10% 10%, rgba(239,68,68,0.18), transparent 40%),
+        radial-gradient(circle at 90% 0%, rgba(248,113,113,0.14), transparent 35%),
+        linear-gradient(to right, rgba(239,68,68,0.08) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(239,68,68,0.08) 1px, transparent 1px);
+      background-size:
+        auto,
+        auto,
+        14px 24px,
+        14px 24px;
+    `,
   },
+
   warning: {
-    gradient: "linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)",
-    headerBg: "#ff9966",
+    gradient: `
+      background-color:#fff7ed;
+      background-image:
+        radial-gradient(circle at 10% 10%, rgba(245,158,11,0.18), transparent 40%),
+        radial-gradient(circle at 90% 0%, rgba(251,191,36,0.14), transparent 35%),
+        linear-gradient(to right, rgba(245,158,11,0.08) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(245,158,11,0.08) 1px, transparent 1px);
+      background-size:
+        auto,
+        auto,
+        14px 24px,
+        14px 24px;
+    `,
   },
 };
 
@@ -30,9 +65,8 @@ export const EMAIL_BASE_TEMPLATE = (
   </head>
   <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f5f5f5;">
     <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="background: ${gradient}; padding: 20px; border-radius: 10px 10px 0 0; text-align: center;">
-        <span style="font-size: 32px; vertical-align: middle;">🎮</span>
-        <span style="margin: 0; color: white; font-size: 24px; font-weight: 600; vertical-align: middle; margin-left: 10px;">GameLearn</span>
+      <div style="${gradient}; padding: 20px; border-radius: 10px 10px 0 0; text-align: center;">
+        <img src="https://gamelearn.fun/logo.svg" style="width: 160px; margin: 0 auto;"/>
       </div>
       
       ${content}

@@ -8,5 +8,4 @@ export type EmailStyle = "default" | "error" | "warning";
 
 export interface EmailStyleConfig {
   gradient: string;
-  headerBg: string;
 }
