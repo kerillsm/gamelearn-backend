@@ -15,7 +15,7 @@ export class EmailService {
 
     try {
       await resend.emails.send({
-        from: appConfig.resend.fromEmail,
+        from: `GameLearn <${appConfig.resend.fromEmail}>`,
         to: [emailTemplate.to],
         subject: emailTemplate.subject,
         html: emailTemplate.html,
