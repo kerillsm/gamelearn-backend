@@ -98,7 +98,7 @@ export class PayoutSplitService {
 
   /**
    * Sum of amountCents for a user's splits with given roles and status.
-   * Used for balance (available = PAID, pending = PENDING).
+   * Used for balance (available = PAYED, pending = PENDING).
    */
   static async getSumCentsByUserRolesAndStatus(
     userId: string,
@@ -110,6 +110,13 @@ export class PayoutSplitService {
         userId,
         role: { in: roles },
         status,
+        payment: {
+          sessionPackage: {
+            status: {
+              notIn: [SessionPackStatus.PENDING, SessionPackStatus.PAYED],
+            },
+          },
+        },
       },
       _sum: { amountCents: true },
     });
