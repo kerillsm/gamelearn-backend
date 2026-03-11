@@ -21,7 +21,13 @@ export function getAvailableStartTimes(
 
     if (!interval.isValid || !start || !end) continue;
 
-    let cursor = start.startOf("minute");
+    const dayStart = start.startOf("day");
+    const minutesSinceMidnight = start.hour * 60 + start.minute;
+    const nextSlotMinutes =
+      Math.ceil(minutesSinceMidnight / stepMinutes) * stepMinutes;
+    if (nextSlotMinutes >= 24 * 60) continue;
+
+    let cursor = dayStart.plus({ minutes: nextSlotMinutes });
 
     while (cursor.plus({ minutes: durationMinutes }) <= end) {
       result.push(cursor.toFormat(format));
