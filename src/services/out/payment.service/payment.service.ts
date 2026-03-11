@@ -4,6 +4,27 @@ import { prisma } from "../../../lib/orm/prisma";
 type PrismaClientLike = typeof prisma;
 
 export class PaymentService {
+  static async listByApplicantId(
+    applicantId: string,
+    page: number,
+    pageSize: number,
+  ) {
+    const where = { sessionPackage: { applicantId } };
+    const [payments, total] = await Promise.all([
+      prisma.payment.findMany({
+        where,
+        include: {
+          sessionPackage: { select: { id: true, type: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      prisma.payment.count({ where }),
+    ]);
+    return { payments, total };
+  }
+
   static async getByStripePaymentIntentId(stripePaymentIntentId: string) {
     return prisma.payment.findUnique({
       where: { stripePaymentIntentId },
