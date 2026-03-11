@@ -1,11 +1,12 @@
 import * as Sentry from "@sentry/node";
-import { SessionPackStatus } from "@prisma/client";
+import { PaymentStatus, SessionPackStatus } from "@prisma/client";
 import { HttpError } from "../../../lib/formatters/httpError";
 import { SessionPackageService } from "../../out/sessionPackage.service";
 import { SessionService } from "../../out/session.service";
 import { UserService } from "../../out/user.service";
 import { StripeService } from "../../out/stripe.service";
 import { PayoutSplitService } from "../../out/payout-split.service";
+import { PaymentService } from "../../out/payment.service";
 import {
   EmailService,
   buildSessionPackageRejectionEmail,
@@ -75,6 +76,16 @@ export class RejectSessionPackageService {
           },
         });
         // Continue with rejection even if refund fails - admin can handle manually
+      }
+    }
+
+    if (refund) {
+      const payment =
+        await PaymentService.getBySessionPackageId(sessionPackageId);
+      if (payment) {
+        await PaymentService.update(payment.id, {
+          status: PaymentStatus.REFUNDED,
+        });
       }
     }
 

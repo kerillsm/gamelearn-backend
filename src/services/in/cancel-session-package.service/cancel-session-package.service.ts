@@ -1,11 +1,12 @@
 import * as Sentry from "@sentry/node";
-import { SessionPackStatus, SessionStatus } from "@prisma/client";
+import { PaymentStatus, SessionPackStatus, SessionStatus } from "@prisma/client";
 import { HttpError } from "../../../lib/formatters/httpError";
 import { SessionPackageService } from "../../out/sessionPackage.service";
 import { SessionService } from "../../out/session.service";
 import { UserService } from "../../out/user.service";
 import { StripeService } from "../../out/stripe.service";
 import { PayoutSplitService } from "../../out/payout-split.service";
+import { PaymentService } from "../../out/payment.service";
 import {
   EmailService,
   buildApplicantCanceledSessionPackageEmail,
@@ -177,6 +178,19 @@ export class CancelSessionPackageService {
     await PayoutSplitService.cancelPendingSplitsBySessionPackageId(
       sessionPackageId,
     );
+
+    if (refundAmount > 0) {
+      const payment =
+        await PaymentService.getBySessionPackageId(sessionPackageId);
+      if (payment) {
+        await PaymentService.update(payment.id, {
+          status:
+            refundAmount >= sessionPackage.price
+              ? PaymentStatus.REFUNDED
+              : PaymentStatus.PARTIALLY_REFUNDED,
+        });
+      }
+    }
 
     const updatedPackage =
       await SessionPackageService.getByIdWithSessions(sessionPackageId);

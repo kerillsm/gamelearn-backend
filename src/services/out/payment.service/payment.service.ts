@@ -40,6 +40,12 @@ export class PaymentService {
     });
   }
 
+  static async getBySessionPackageId(sessionPackageId: string) {
+    return prisma.payment.findUnique({
+      where: { sessionPackageId },
+    });
+  }
+
   static async create(
     data: {
       sessionPackageId: string;
