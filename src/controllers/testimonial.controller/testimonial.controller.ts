@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { TestimonialStatus, UserRole } from "@prisma/client";
 import { Context } from "koa";
 import { Validate } from "../../lib/decorators/validate.decorator";
 import { AuthRequired } from "../../lib/decorators/authRequired.decorator";
@@ -101,5 +102,43 @@ export class TestimonialController {
       count,
       average,
     };
+  }
+
+  @AuthRequired([UserRole.ADMIN])
+  static async getAdminPendingTestimonials(ctx: Context) {
+    const page = Math.max(1, Number(ctx.query.page) || 1);
+    const take = Math.min(100, Math.max(1, Number(ctx.query.take) || 10));
+    const skip = (page - 1) * take;
+    const { list, totalCount } =
+      await TestimonialService.getPendingTestimonials(skip, take);
+    ctx.status = 200;
+    ctx.body = {
+      testimonials: await Promise.all(
+        list.map((t) => serializeTestimonial(t, undefined)),
+      ),
+      totalCount,
+    };
+  }
+
+  @AuthRequired([UserRole.ADMIN])
+  static async approveTestimonial(ctx: Context) {
+    const { id } = ctx.params;
+    await TestimonialService.updateTestimonialStatus(
+      id,
+      TestimonialStatus.APPROVED,
+    );
+    ctx.status = 200;
+    ctx.body = { ok: true };
+  }
+
+  @AuthRequired([UserRole.ADMIN])
+  static async rejectTestimonial(ctx: Context) {
+    const { id } = ctx.params;
+    await TestimonialService.updateTestimonialStatus(
+      id,
+      TestimonialStatus.REJECTED,
+    );
+    ctx.status = 200;
+    ctx.body = { ok: true };
   }
 }

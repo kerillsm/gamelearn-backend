@@ -120,6 +120,31 @@ export class TestimonialService {
     });
   }
 
+  static async getPendingTestimonials(skip = 0, take = 10) {
+    const where = { status: TestimonialStatus.PENDING };
+    const [list, totalCount] = await Promise.all([
+      prisma.testimonial.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { createdAt: "desc" },
+        include: {
+          user: true,
+          mentorUser: {
+            include: {
+              mentorProfiles: {
+                select: { name: true },
+                where: { status: MentorProfileStatus.ACTIVE },
+              },
+            },
+          },
+        },
+      }),
+      prisma.testimonial.count({ where }),
+    ]);
+    return { list, totalCount };
+  }
+
   static getLatestTestimonials() {
     return prisma.testimonial.findMany({
       where: {

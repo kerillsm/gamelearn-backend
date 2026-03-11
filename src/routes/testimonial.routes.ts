@@ -5,6 +5,12 @@ import { TestimonialController } from "../controllers/testimonial.controller";
 const router = new Router();
 
 router.get(
+  "/admin/pending",
+  authMiddleware,
+  TestimonialController.getAdminPendingTestimonials,
+);
+
+router.get(
   "/pending-mentor-profiles",
   authMiddleware,
   TestimonialController.getPendingTestimonialsMentorProfiles,
@@ -31,5 +37,17 @@ router.post(
 );
 
 router.get("/mentor/:slug", TestimonialController.getMentorTestimonials);
+
+router.post(
+  "/:id/approve",
+  authMiddleware,
+  TestimonialController.approveTestimonial,
+);
+
+router.post(
+  "/:id/reject",
+  authMiddleware,
+  TestimonialController.rejectTestimonial,
+);
 
 export { router as testimonialRoutes };
