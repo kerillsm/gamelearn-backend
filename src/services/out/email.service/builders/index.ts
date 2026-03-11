@@ -1,4 +1,5 @@
 export { buildApplicantBookingConfirmationEmail } from "./booking-confirmation.builder";
+export { buildMentorBookingNotificationEmail } from "./mentor-booking-notification.builder";
 export { buildApplicantSessionCheckoutExpiredEmail } from "./session-checkout-expiration.builder";
 export { buildSessionPackageApprovalEmail } from "./session-package-approval.builder";
 export { buildSessionPackageCompletedEmail } from "./session-package-completed.builder";

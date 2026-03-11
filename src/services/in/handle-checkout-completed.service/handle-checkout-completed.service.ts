@@ -23,6 +23,7 @@ import { RejectSessionPackageService } from "../reject-session-package.service";
 import {
   EmailService,
   buildApplicantBookingConfirmationEmail,
+  buildMentorBookingNotificationEmail,
 } from "../../out/email.service";
 
 /** Referral bonus percent used in PricingService (for PaymentReferral snapshot). */
@@ -348,6 +349,17 @@ export class HandleCheckoutCompletedService {
         );
         console.log(
           `Booking confirmation email sent to ${pkg.applicant.email}`,
+        );
+        await EmailService.sendEmail(
+          buildMentorBookingNotificationEmail({
+            applicant: pkg.applicant,
+            mentor: pkg.mentor,
+            sessions: pkg.sessions,
+            sessionPackage: pkg,
+          }),
+        );
+        console.log(
+          `Mentor booking notification email sent to ${pkg.mentor.email}`,
         );
       }
     } catch (error) {

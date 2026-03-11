@@ -13,7 +13,6 @@ import {
   SessionPackage,
   SessionPackageType,
   SessionStatus,
-  StripeConnectStatus,
 } from "@prisma/client";
 import { StripeService } from "../../out/stripe.service";
 import { appConfig } from "../../../config/appConfig";
@@ -21,6 +20,10 @@ import { PricingService } from "../pricing.service";
 import { SessionValidationService } from "../session-validation.service";
 import { BookSessionPackageResult } from "./book-session-package.interface";
 import { ReferralService } from "../../out/referral.service";
+import {
+  EmailService,
+  buildMentorBookingNotificationEmail,
+} from "../../out/email.service";
 
 /** Payment and PayoutSplits are created on checkout completion (handle-checkout-completed), not here. */
 export class BookSessionPackageService {
@@ -139,6 +142,24 @@ export class BookSessionPackageService {
       )) as SessionPackage & { sessions: Session[] };
       if (!sessionPackage) {
         throw new HttpError(500, "Session package not found");
+      }
+      try {
+        await EmailService.sendEmail(
+          buildMentorBookingNotificationEmail({
+            applicant: user,
+            mentor: mentorUser,
+            sessions: sessionPackage.sessions,
+            sessionPackage,
+          }),
+        );
+        console.log(
+          `Mentor booking notification email sent to ${mentorUser.email}`,
+        );
+      } catch (error) {
+        console.error(
+          "Failed to send mentor booking notification email:",
+          error,
+        );
       }
       return { sessionPackage, checkoutUrl: null };
     }
