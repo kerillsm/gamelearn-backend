@@ -89,6 +89,22 @@ export class SessionService {
     });
   }
 
+  static countCompletedSessions() {
+    return prisma.session.count({
+      where: { status: SessionStatus.COMPLETED },
+    });
+  }
+
+  static countCompletedSessionsByMentorSince(mentorId: string, since: Date) {
+    return prisma.session.count({
+      where: {
+        sessionPackage: { mentorId },
+        status: SessionStatus.COMPLETED,
+        scheduledAt: { gte: since },
+      },
+    });
+  }
+
   static deletePendingByIds(sessionIds: string[]) {
     return prisma.session.deleteMany({
       where: {

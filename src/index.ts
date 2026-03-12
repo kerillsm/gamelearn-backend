@@ -25,6 +25,7 @@ import { testimonialRoutes } from "./routes/testimonial.routes";
 import { adminMentorProfileRoutes } from "./routes/adminMentorProfile.routes";
 import { adminMentorApplicationRoutes } from "./routes/adminMentorApplication.routes";
 import { newsletterRoutes } from "./routes/newsletter.routes";
+import { statsRoutes } from "./routes/stats.routes";
 import { AutoCompleteApprovedSessionsService } from "./services/in/auto-complete-approved-sessions.service";
 import { AutoRejectExpiredPackagesService } from "./services/in/auto-reject-expired-packages.service";
 import { ReleasePaymentService } from "./services/in/release-payment.service";
@@ -112,6 +113,7 @@ router.use(
   newsletterRoutes.routes(),
   newsletterRoutes.allowedMethods(),
 );
+router.use("/stats", statsRoutes.routes(), statsRoutes.allowedMethods());
 
 app.use(router.routes()).use(router.allowedMethods());
 // every hour

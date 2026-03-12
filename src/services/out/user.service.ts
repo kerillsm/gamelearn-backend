@@ -1,7 +1,19 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, UserRole } from "@prisma/client";
 import { prisma } from "../../lib/orm/prisma";
 
 export class UserService {
+  static countUsers(role?: UserRole) {
+    return prisma.user.count({
+      where: role ? { role } : {},
+    });
+  }
+
+  static countUsersCreatedSince(since: Date) {
+    return prisma.user.count({
+      where: { createdAt: { gte: since } },
+    });
+  }
+
   static getById(id: string) {
     return prisma.user.findUnique({
       where: { id },
