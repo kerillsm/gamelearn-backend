@@ -258,6 +258,7 @@ model Referral {
 enum AgreementType {
   TERMS_OF_SERVICE
   PRIVACY_POLICY
+  REFERRAL_PROGRAM_RULES
 }
 
 model Agreement {

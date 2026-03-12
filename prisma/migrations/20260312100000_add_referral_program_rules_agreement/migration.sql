@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "AgreementType" ADD VALUE 'REFERRAL_PROGRAM_RULES';

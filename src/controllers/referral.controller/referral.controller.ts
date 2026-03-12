@@ -17,9 +17,22 @@ export class ReferralController {
   }
 
   @AuthRequired()
+  @Validate(
+    Joi.object({
+      acceptReferralRules: Joi.boolean().optional(),
+    }).default({}),
+  )
   static async generateCode(ctx: Context) {
     const user = ctx.state.user!;
-    const referralCode = await GenerateReferralCodeService.execute(user.id);
+    const body = ctx.request.body as { acceptReferralRules?: boolean };
+    const ipAddress = ctx.ip || ctx.request.ip || "unknown";
+    const userAgent = ctx.get("User-Agent") || undefined;
+
+    const referralCode = await GenerateReferralCodeService.execute(user.id, {
+      acceptReferralRules: body.acceptReferralRules,
+      ipAddress,
+      userAgent,
+    });
 
     ctx.status = 201;
     ctx.body = { referralCode: referralCode.code };
