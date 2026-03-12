@@ -1,4 +1,9 @@
-import { Prisma, SessionPackStatus, SessionPackageType } from "@prisma/client";
+import {
+  MentorProfileStatus,
+  Prisma,
+  SessionPackStatus,
+  SessionPackageType,
+} from "@prisma/client";
 import { prisma } from "../../../lib/orm/prisma";
 
 export const SESSION_PACKAGE_DURATION_BY_TYPE: Record<
@@ -95,7 +100,11 @@ export class SessionPackageService {
       prisma.sessionPackage.findMany({
         where,
         include: {
-          mentor: { select: userSelect },
+          mentor: {
+            include: {
+              mentorProfiles: { where: { status: MentorProfileStatus.ACTIVE } },
+            },
+          },
           applicant: { select: userSelect },
           sessions: { orderBy: { scheduledAt: "asc" } },
         },

@@ -11,9 +11,35 @@ import { ApproveSessionPackageService } from "../../services/in/approve-session-
 import { RejectSessionPackageService } from "../../services/in/reject-session-package.service";
 import { CancelSessionPackageService } from "../../services/in/cancel-session-package.service/cancel-session-package.service";
 import { CreateDisputeService } from "../../services/in/create-dispute.service";
-import { serializeSessionPackage } from "../../lib/serialization";
+import { GetNextSessionService } from "../../services/in/get-next-session.service";
+import {
+  serializeSessionPackage,
+  serializeSession,
+} from "../../lib/serialization";
 
 export class SessionPackageController {
+  @AuthRequired()
+  static async getNextSession(ctx: Context) {
+    const user = ctx.state.user;
+    const result = await GetNextSessionService.getNextSession(user.id);
+    if (!result) {
+      ctx.status = 200;
+      ctx.body = { nextSession: null };
+      return;
+    }
+    const sessionPackage = await serializeSessionPackage(
+      result.sessionPackage,
+      String(user.id),
+    );
+    ctx.status = 200;
+    ctx.body = {
+      nextSession: {
+        session: serializeSession(result.session),
+        sessionPackage,
+      },
+    };
+  }
+
   @AuthRequired()
   static async getMySessionPackages(ctx: Context) {
     const user = ctx.state.user;

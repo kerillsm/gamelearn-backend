@@ -1,4 +1,9 @@
-import { Prisma, SessionStatus } from "@prisma/client";
+import {
+  MentorProfileStatus,
+  Prisma,
+  SessionPackStatus,
+  SessionStatus,
+} from "@prisma/client";
 import { prisma } from "../../../lib/orm/prisma";
 
 export class SessionService {
@@ -109,6 +114,42 @@ export class SessionService {
         status: { in: statuses },
       },
       orderBy: { scheduledAt: "asc" },
+    });
+  }
+
+  static getNextUpcomingForApplicant(applicantId: string) {
+    const now = new Date();
+    return prisma.session.findFirst({
+      where: {
+        sessionPackage: {
+          applicantId,
+          status: { in: [SessionPackStatus.PAYED, SessionPackStatus.APPROVED] },
+        },
+        scheduledAt: { gt: now },
+        status: {
+          in: [
+            SessionStatus.PENDING,
+            SessionStatus.PAYED,
+            SessionStatus.APPROVED,
+          ],
+        },
+      },
+      orderBy: { scheduledAt: "asc" },
+      include: {
+        sessionPackage: {
+          include: {
+            mentor: {
+              include: {
+                mentorProfiles: {
+                  where: {
+                    status: MentorProfileStatus.ACTIVE,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
   }
 }

@@ -5,6 +5,11 @@ import { SessionPackageController } from "../controllers/sessionPackage.controll
 const router = new Router();
 
 router.get(
+  "/next-session",
+  authMiddleware,
+  SessionPackageController.getNextSession,
+);
+router.get(
   "/my-packages",
   authMiddleware,
   SessionPackageController.getMySessionPackages,
