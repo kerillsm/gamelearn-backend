@@ -10,5 +10,10 @@ router.get(
   authMiddleware,
   FinanceController.getPaymentHistory,
 );
+router.get(
+  "/incomes-history",
+  authMiddleware,
+  FinanceController.getIncomesHistory,
+);
 
 export { router as financeRoutes };

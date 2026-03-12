@@ -1,10 +1,23 @@
 import {
   PayoutSplit,
+  Prisma,
   SessionPackStatus,
   SplitRole,
   SplitStatus,
 } from "@prisma/client";
 import { prisma } from "../../../lib/orm/prisma";
+
+export type PayoutSplitWithPaymentForHistory = Prisma.PayoutSplitGetPayload<{
+  include: {
+    payment: {
+      select: {
+        sessionPackageId: true;
+        createdAt: true;
+        sessionPackage: { select: { lastSessionEndAt: true } };
+      };
+    };
+  };
+}>;
 
 const DEFAULT_HOLD_HOURS_AFTER_LAST_SESSION = 48;
 
@@ -121,6 +134,48 @@ export class PayoutSplitService {
       _sum: { amountCents: true },
     });
     return result._sum?.amountCents ?? 0;
+  }
+
+  /**
+   * Paginated list of PayoutSplits for a user (for incomes history).
+   * When includePlatformIncomes is true (e.g. for admin), also includes splits with userId null and role PLATFORM.
+   * Order: by payment createdAt desc.
+   */
+  static async listByUserIdPaginated(
+    userId: string,
+    page: number,
+    pageSize: number,
+    includePlatformIncomes = false,
+  ): Promise<{ splits: PayoutSplitWithPaymentForHistory[]; total: number }> {
+    const where = includePlatformIncomes
+      ? {
+          OR: [
+            { userId },
+            { userId: null, role: SplitRole.PLATFORM },
+          ],
+        }
+      : { userId };
+    const [splits, total] = await Promise.all([
+      prisma.payoutSplit.findMany({
+        where,
+        include: {
+          payment: {
+            select: {
+              sessionPackageId: true,
+              createdAt: true,
+              sessionPackage: {
+                select: { lastSessionEndAt: true },
+              },
+            },
+          },
+        },
+        orderBy: { payment: { createdAt: "desc" } },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      prisma.payoutSplit.count({ where }),
+    ]);
+    return { splits, total };
   }
 
   /**
