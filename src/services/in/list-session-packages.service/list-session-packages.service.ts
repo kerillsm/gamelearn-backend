@@ -42,6 +42,18 @@ export class ListSessionPackagesService {
     };
   }
 
+  static async listDisputeSessionPackages(page = 1, pageSize = 10) {
+    const result = await SessionPackageService.listPackages(
+      {},
+      {
+        page,
+        pageSize,
+        status: SessionPackStatus.IN_DISPUTE,
+      },
+    );
+    return { ...result, page, pageSize };
+  }
+
   private static parseStatus(status?: string): SessionPackStatus | undefined {
     if (!status || status === "ALL") return undefined;
     return Object.values(SessionPackStatus).includes(

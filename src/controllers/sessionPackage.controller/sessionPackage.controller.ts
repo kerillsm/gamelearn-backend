@@ -11,6 +11,8 @@ import { ApproveSessionPackageService } from "../../services/in/approve-session-
 import { RejectSessionPackageService } from "../../services/in/reject-session-package.service";
 import { CancelSessionPackageService } from "../../services/in/cancel-session-package.service/cancel-session-package.service";
 import { CreateDisputeService } from "../../services/in/create-dispute.service";
+import { ResolveDisputeService } from "../../services/in/resolve-dispute.service";
+import { RefundDisputeService } from "../../services/in/refund-dispute.service";
 import { GetNextSessionService } from "../../services/in/get-next-session.service";
 import {
   serializeSessionPackage,
@@ -256,6 +258,57 @@ export class SessionPackageController {
       user.id,
       reason.trim(),
     );
+    ctx.status = 200;
+    ctx.body = {
+      sessionPackage: sessionPackage
+        ? await serializeSessionPackage(sessionPackage, String(user.id))
+        : null,
+    };
+  }
+
+  @AuthRequired([UserRole.ADMIN])
+  static async getDisputeSessionPackages(ctx: Context) {
+    const { page } = ctx.query as { page?: string };
+
+    const result = await ListSessionPackagesService.listDisputeSessionPackages(
+      page ? parseInt(page, 10) : 1,
+      10,
+    );
+    const adminAllowSet = new Set(
+      result.sessionPackages.flatMap((pkg) => [pkg.mentorId, pkg.applicantId]),
+    );
+    ctx.status = 200;
+    ctx.body = {
+      ...result,
+      sessionPackages: await Promise.all(
+        result.sessionPackages.map((pkg) =>
+          serializeSessionPackage(pkg, adminAllowSet),
+        ),
+      ),
+    };
+  }
+
+  @AuthRequired([UserRole.ADMIN])
+  static async resolveDisputeSessionPackage(ctx: Context) {
+    const user = ctx.state.user;
+    const { sessionPackageId } = ctx.params as { sessionPackageId: string };
+
+    const sessionPackage =
+      await ResolveDisputeService.execute(sessionPackageId);
+    ctx.status = 200;
+    ctx.body = {
+      sessionPackage: sessionPackage
+        ? await serializeSessionPackage(sessionPackage, String(user.id))
+        : null,
+    };
+  }
+
+  @AuthRequired([UserRole.ADMIN])
+  static async refundDisputeSessionPackage(ctx: Context) {
+    const user = ctx.state.user;
+    const { sessionPackageId } = ctx.params as { sessionPackageId: string };
+
+    const sessionPackage = await RefundDisputeService.execute(sessionPackageId);
     ctx.status = 200;
     ctx.body = {
       sessionPackage: sessionPackage

@@ -46,6 +46,7 @@ export class CreateDisputeService {
 
     await SessionPackageService.update(sessionPackageId, {
       status: SessionPackStatus.IN_DISPUTE,
+      disputeReason: reason.trim(),
     });
 
     const reporterRole = isApplicant ? "applicant" : "mentor";

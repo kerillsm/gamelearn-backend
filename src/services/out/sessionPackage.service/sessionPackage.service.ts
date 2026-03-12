@@ -94,8 +94,6 @@ export class SessionPackageService {
         }),
     };
 
-    const userSelect = { id: true, name: true, picture: true, slug: true };
-
     const [sessionPackages, total] = await Promise.all([
       prisma.sessionPackage.findMany({
         where,
@@ -105,7 +103,7 @@ export class SessionPackageService {
               mentorProfiles: { where: { status: MentorProfileStatus.ACTIVE } },
             },
           },
-          applicant: { select: userSelect },
+          applicant: true,
           sessions: { orderBy: { scheduledAt: "asc" } },
         },
         orderBy: { createdAt: "desc" },

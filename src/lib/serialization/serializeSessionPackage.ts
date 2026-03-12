@@ -14,9 +14,11 @@ export async function serializeSessionPackage(
   viewerId?: string | Set<string> | null,
 ) {
   const allowSet =
-    typeof viewerId === "string"
-      ? await getAllowPrivateUserIds(viewerId)
-      : (viewerId ?? null);
+    viewerId instanceof Set
+      ? viewerId
+      : typeof viewerId === "string"
+        ? await getAllowPrivateUserIds(viewerId)
+        : null;
 
   const { mentor, applicant, sessions, ...rest } = omit(
     pkg,

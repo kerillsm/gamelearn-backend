@@ -20,6 +20,12 @@ router.get(
   SessionPackageController.getMentorSessionPackages,
 );
 
+router.get(
+  "/admin/disputes",
+  authMiddleware,
+  SessionPackageController.getDisputeSessionPackages,
+);
+
 router.post("/", authMiddleware, SessionPackageController.createSessionPackage);
 
 router.get(
@@ -56,6 +62,18 @@ router.post(
   "/:sessionPackageId/dispute",
   authMiddleware,
   SessionPackageController.createDisputeSessionPackage,
+);
+
+router.post(
+  "/:sessionPackageId/resolve-dispute",
+  authMiddleware,
+  SessionPackageController.resolveDisputeSessionPackage,
+);
+
+router.post(
+  "/:sessionPackageId/refund-dispute",
+  authMiddleware,
+  SessionPackageController.refundDisputeSessionPackage,
 );
 
 export { router as sessionPackageRoutes };
