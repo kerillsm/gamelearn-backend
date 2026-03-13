@@ -1,6 +1,7 @@
 import Router from "koa-router";
 import { authMiddleware } from "../lib/middleware/auth";
 import { MentorProfileController } from "../controllers/mentorProfile.controller";
+import { verifiedEmailMiddleware } from "../lib/middleware/verifiedEmailMiddleware";
 
 const router = new Router();
 
@@ -14,6 +15,11 @@ router.get(
 
 router.get("/:slug", MentorProfileController.getBySlug);
 
-router.post("/", authMiddleware, MentorProfileController.upsertProfile);
+router.post(
+  "/",
+  authMiddleware,
+  verifiedEmailMiddleware,
+  MentorProfileController.upsertProfile,
+);
 
 export { router as mentorProfileRoutes };

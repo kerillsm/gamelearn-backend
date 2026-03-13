@@ -11,9 +11,6 @@ export class SubscribeNewsletterService {
     if (!user) {
       throw new HttpError(401, "User not found");
     }
-    if (!user.emailVerified) {
-      throw new HttpError(400, "Email must be verified to subscribe to the newsletter");
-    }
 
     const existing = await NewsletterSubscriptionService.findByEmail(user.email);
     if (existing) {

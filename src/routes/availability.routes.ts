@@ -1,12 +1,14 @@
 import Router from "koa-router";
 import { AvailabilityController } from "../controllers/availability.controller";
 import { authMiddleware } from "../lib/middleware/auth";
+import { verifiedEmailMiddleware } from "../lib/middleware/verifiedEmailMiddleware";
 
 const router = new Router();
 
 router.post(
   "/rules",
   authMiddleware,
+  verifiedEmailMiddleware,
   AvailabilityController.updateAvailabilityRules,
 );
 
@@ -19,6 +21,7 @@ router.get(
 router.post(
   "/exception",
   authMiddleware,
+  verifiedEmailMiddleware,
   AvailabilityController.addAvailabilityException,
 );
 

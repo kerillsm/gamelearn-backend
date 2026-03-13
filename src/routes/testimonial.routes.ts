@@ -1,6 +1,7 @@
 import Router from "koa-router";
 import { authMiddleware } from "../lib/middleware/auth";
 import { TestimonialController } from "../controllers/testimonial.controller";
+import { verifiedEmailMiddleware } from "../lib/middleware/verifiedEmailMiddleware";
 
 const router = new Router();
 
@@ -33,6 +34,7 @@ router.get(
 router.post(
   "/upsert/:slug",
   authMiddleware,
+  verifiedEmailMiddleware,
   TestimonialController.upsertTestimonial,
 );
 
@@ -41,12 +43,14 @@ router.get("/mentor/:slug", TestimonialController.getMentorTestimonials);
 router.post(
   "/:id/approve",
   authMiddleware,
+  verifiedEmailMiddleware,
   TestimonialController.approveTestimonial,
 );
 
 router.post(
   "/:id/reject",
   authMiddleware,
+  verifiedEmailMiddleware,
   TestimonialController.rejectTestimonial,
 );
 
