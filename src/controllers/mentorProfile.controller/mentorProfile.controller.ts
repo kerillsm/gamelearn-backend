@@ -12,6 +12,12 @@ import { MentorProfileService } from "../../services/out/mentorProfile.service";
 import { HttpError } from "../../lib/formatters/httpError";
 
 export class MentorProfileController {
+  static async getFiltersOptions(ctx: Context) {
+    const result = await MentorProfileService.getFiltersOptions();
+    ctx.status = 200;
+    ctx.body = result;
+  }
+
   static async getMentorProfiles(ctx: Context) {
     const query = ctx.request.query.query as string | undefined;
     const page = ctx.request.query.page
@@ -20,12 +26,31 @@ export class MentorProfileController {
     const take = ctx.request.query.take
       ? parseInt(ctx.request.query.take as string, 10)
       : undefined;
+    const ratingMinParam = ctx.request.query.ratingMin as string | undefined;
+    const ratingMaxParam = ctx.request.query.ratingMax as string | undefined;
+    const tagsParam = ctx.request.query.tags;
+    const tags = Array.isArray(tagsParam)
+      ? (tagsParam as string[])
+      : tagsParam
+        ? [tagsParam as string]
+        : undefined;
+    const ratingMin =
+      ratingMinParam != null && ratingMinParam !== ""
+        ? parseFloat(ratingMinParam)
+        : undefined;
+    const ratingMax =
+      ratingMaxParam != null && ratingMaxParam !== ""
+        ? parseFloat(ratingMaxParam)
+        : undefined;
 
     const { mentorProfiles, totalCount } =
       await MentorProfileService.getMentorProfiles({
         query,
         page,
         take,
+        ratingMin: Number.isNaN(ratingMin) ? undefined : ratingMin,
+        ratingMax: Number.isNaN(ratingMax) ? undefined : ratingMax,
+        tags: tags?.length ? tags : undefined,
       });
     ctx.status = 200;
     ctx.body = { mentorProfiles, totalCount };

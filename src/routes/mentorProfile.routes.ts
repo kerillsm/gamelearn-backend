@@ -13,6 +13,8 @@ router.get(
   MentorProfileController.getCurrentUserProfile,
 );
 
+router.get("/filters-options", MentorProfileController.getFiltersOptions);
+
 router.get("/:slug", MentorProfileController.getBySlug);
 
 router.post(

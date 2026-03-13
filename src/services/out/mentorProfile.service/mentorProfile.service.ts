@@ -13,12 +13,46 @@ export class MentorProfileService {
     });
   }
 
+  static async getFiltersOptions(): Promise<{
+    tags: string[];
+    ratingMin: number | null;
+    ratingMax: number | null;
+  }> {
+    const [profilesWithTags, ratingAgg] = await Promise.all([
+      prisma.mentorProfile.findMany({
+        where: { status: MentorProfileStatus.ACTIVE },
+        select: { tags: true },
+      }),
+      prisma.mentorProfile.aggregate({
+        where: {
+          status: MentorProfileStatus.ACTIVE,
+          gameRating: { not: null },
+        },
+        _min: { gameRating: true },
+        _max: { gameRating: true },
+      }),
+    ]);
+
+    const tags = Array.from(
+      new Set(profilesWithTags.flatMap((p) => p.tags))
+    ).sort();
+
+    return {
+      tags,
+      ratingMin: ratingAgg._min.gameRating ?? null,
+      ratingMax: ratingAgg._max.gameRating ?? null,
+    };
+  }
+
   static async getMentorProfiles(params: {
     query?: string;
     page?: number;
     take?: number;
+    ratingMin?: number;
+    ratingMax?: number;
+    tags?: string[];
   }) {
-    const { query, page = 1, take = 10 } = params;
+    const { query, page = 1, take = 10, ratingMin, ratingMax, tags } = params;
     const whereClause: Prisma.MentorProfileWhereInput = {
       status: MentorProfileStatus.ACTIVE,
     };
@@ -29,6 +63,20 @@ export class MentorProfileService {
         { description: { contains: query, mode: "insensitive" } },
         { shortDescription: { contains: query, mode: "insensitive" } },
       ];
+    }
+
+    if (ratingMin != null || ratingMax != null) {
+      whereClause.gameRating = {};
+      if (ratingMin != null) {
+        (whereClause.gameRating as Prisma.FloatFilter).gte = ratingMin;
+      }
+      if (ratingMax != null) {
+        (whereClause.gameRating as Prisma.FloatFilter).lte = ratingMax;
+      }
+    }
+
+    if (tags?.length) {
+      whereClause.tags = { hasSome: tags };
     }
 
     const mentorProfiles = await prisma.mentorProfile.findMany({
