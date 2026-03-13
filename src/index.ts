@@ -33,6 +33,12 @@ import { ReleasePaymentService } from "./services/in/release-payment.service";
 // Initialize Koa app
 const app = new Koa();
 Sentry.setupKoaErrorHandler(app);
+try {
+  throw new Error("Test Sentry event");
+} catch (e) {
+  Sentry.captureException(e);
+}
+
 // Enable proxy trust to get correct client IP when behind a proxy
 app.proxy = true;
 // Initialize router
